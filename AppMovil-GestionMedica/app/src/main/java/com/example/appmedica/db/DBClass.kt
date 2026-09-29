@@ -8,7 +8,7 @@ class DBClass {
     }
     fun getPaciente(nombre: String): Paciente?
     {
-        return ListaDePacientes.find { it.nombre == "Carlos" }
+        return ListaDePacientes.find { it.nombre == nombre }
     }
     fun getPacientes(): List<Paciente>
     {
