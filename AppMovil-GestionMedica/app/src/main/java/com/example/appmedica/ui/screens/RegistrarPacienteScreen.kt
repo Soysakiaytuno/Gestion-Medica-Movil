@@ -153,7 +153,8 @@ fun RegistrarPacienteScreen(
                             ci = ciLimpio,
                             fechaNacimiento = fecha,
                             email = email.trim(),
-                            celular = celularLimpio
+                            celular = celularLimpio,
+                            diagnosticos = emptyList()
                         )
                     )
                 }
