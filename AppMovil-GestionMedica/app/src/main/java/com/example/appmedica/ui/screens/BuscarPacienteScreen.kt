@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appmedica.viewmodel.BuscarPacienteViewModel
 import com.example.appmedica.model.calcularEdad
@@ -71,7 +72,7 @@ fun BuscarPacienteScreen(
                     .padding(horizontal = 14.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "\u2190", color = Color.White, fontWeight = FontWeight.Bold)
+                Text(text = "<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
 
             Text(
