@@ -10,6 +10,6 @@ data class Paciente(
     val ci: String,
     val email: String,
     val celular: String,
-    val diagnosticos: List<Diagnostico>
+    val diagnosticos: List<Diagnostico>,
     val fechaNacimiento: LocalDate
 )

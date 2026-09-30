@@ -32,7 +32,7 @@ fun AppMedica() {
     // La lista global que exige la rúbrica para compartir datos
     val pacientesGlobales = remember { mutableStateListOf<Paciente>() }
 
-    NavHost(navController = navController, startDestination = "historial") {
+    NavHost(navController = navController, startDestination = "inicio") {
 
         composable("inicio") {
             InicioScreen(
