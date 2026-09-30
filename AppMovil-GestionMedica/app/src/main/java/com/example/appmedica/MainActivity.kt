@@ -36,17 +36,24 @@ class MainActivity : ComponentActivity() {
 fun AppMedica() {
     val navController = rememberNavController()
 
-    NavHost(navController = navController, startDestination = "registro") {
+    NavHost(navController = navController, startDestination = "buscar") {
+
+        composable("buscar") {
+            BuscarPacienteScreen(
+                volver = { navController.popBackStack() },
+                irAgregar = { navController.navigate("registro") },
+                irDetalles = { id -> /* pendiente: navegación a detalle */ }
+            )
+        }
 
         composable("registro") {
             RegistrarPacienteScreen(
                 onGuardarPaciente = { nuevoPaciente ->
                     DBClass.agregar(nuevoPaciente)
-                    navController.popBackStack() // Vuelve a inicio después de guardar
+                    navController.popBackStack()
                 },
                 onVolver = { navController.popBackStack() }
             )
         }
-
     }
 }
