@@ -123,13 +123,7 @@ fun InicioScreen(
                 value = viewModel.query,
                 onValueChange = { viewModel.onQueryChange(it) },
                 placeholder = { Text(text = "Buscar por nombre", color = AzulMedio) },
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Buscar",
-                        tint = AzulPrincipal
-                    )
-                },
+                trailingIcon = { Text(text = "\uD83D\uDD0D") },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = TextFieldDefaults.colors(
