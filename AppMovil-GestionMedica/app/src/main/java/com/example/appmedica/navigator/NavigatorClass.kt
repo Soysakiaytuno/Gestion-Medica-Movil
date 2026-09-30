@@ -7,6 +7,7 @@ import androidx.navigation.compose.composable
 import com.example.appmedica.db.DBClass
 import com.example.appmedica.ui.screens.BuscarPacienteScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
+import com.example.appmedica.ui.screens.HistorialMedicoScreen
 
 @Composable
 fun AppNavegacion(){
@@ -30,6 +31,13 @@ fun AppNavegacion(){
                     DBClass.agregar(nuevoPaciente)
                     navController.popBackStack()
                 },
+                onVolver = {navController.popBackStack()}
+            )
+        }
+
+        composable("historial_medico"){
+            HistorialMedicoScreen(
+                paciente = null,
                 onVolver = {navController.popBackStack()}
             )
         }

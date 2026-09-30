@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.appmedica.db.DBClass
+import com.example.appmedica.navigator.AppNavegacion
 import com.example.appmedica.ui.screens.BuscarPacienteScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
 
@@ -22,7 +23,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                BuscarPacienteScreen()
+                AppNavegacion()
             }
         }
     }
