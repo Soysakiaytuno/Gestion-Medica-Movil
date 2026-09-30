@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                AppMedica()
+                BuscarPacienteScreen()
             }
         }
     }
@@ -51,15 +51,6 @@ fun AppMedica() {
                 onVolver = { navController.popBackStack() }
             )
         }
-
-        composable("detalle/{id}") {
-            DetallePacienteScreen(
-                paciente = pacientesGlobales.firstOrNull(),
-                onVerHistorial = { navController.navigate("historial") },
-                onVolver = { navController.popBackStack() }
-            )
-        }
-
         composable("historial") {
             HistorialMedicoScreen(
                 paciente = pacientesGlobales.firstOrNull(),
