@@ -1,5 +1,7 @@
 package com.example.appmedica.model
 
+import java.time.LocalDate
+
 data class Paciente(
     val id: String = java.util.UUID.randomUUID().toString(),
     val nombre: String,
@@ -8,5 +10,6 @@ data class Paciente(
     val ci: String,
     val email: String,
     val celular: String,
-    val diagnostico: String = "Pendiente de diagnóstico"
+    val diagnostico: String = "Pendiente de diagnóstico",
+    val fechaNacimiento: LocalDate
 )
