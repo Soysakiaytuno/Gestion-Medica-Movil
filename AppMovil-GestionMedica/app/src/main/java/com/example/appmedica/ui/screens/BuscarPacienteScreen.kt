@@ -37,8 +37,8 @@ import com.example.appmedica.model.calcularEdad
 
 private val Celeste = Color(0xFFD6F0FF)
 private val CelesteGris = Color(0xFF9BBACC)
-private val AzulMedio = Color(0xFF568099)
-private val AzulOscuro = Color(0xFF254E66)
+//private val AzulMedio = Color(0xFF568099)
+//private val AzulOscuro = Color(0xFF254E66)
 private val FondoOscuro = Color(0xFF082333)
 
 @Composable

@@ -13,6 +13,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.appmedica.db.DBClass
+import com.example.appmedica.ui.screens.BuscarPacienteScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
 
 class MainActivity : ComponentActivity() {
@@ -21,12 +22,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppMedica()
-                }
+                BuscarPacienteScreen()
             }
         }
     }
@@ -38,13 +34,13 @@ fun AppMedica() {
 
     NavHost(navController = navController, startDestination = "buscar") {
 
-        composable("buscar") {
+        /*composable("buscar") {
             BuscarPacienteScreen(
                 volver = { navController.popBackStack() },
                 irAgregar = { navController.navigate("registro") },
                 irDetalles = { id -> /* pendiente: navegación a detalle */ }
             )
-        }
+        }*/
 
         composable("registro") {
             RegistrarPacienteScreen(
