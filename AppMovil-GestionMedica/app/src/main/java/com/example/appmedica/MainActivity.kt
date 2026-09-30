@@ -13,20 +13,31 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.appmedica.db.DBClass
+import com.example.appmedica.ui.screens.BuscarPacienteScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
+import com.example.appmedica.model.Paciente
+import java.time.LocalDate
+
+import java.time.Period
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        DBClass.agregar(
+            Paciente(
+                nombre = "Jose",
+                apellidoPaterno = "Mendoza",
+                apellidoMaterno = "Rojas",
+                ci = "1234567",
+                email = "jose@mail.com",
+                celular = "70000001",
+                fechaNacimiento = LocalDate.of(2001, 3, 15)
+            )
+        )
         setContent {
             MaterialTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    AppMedica()
-                }
+                BuscarPacienteScreen()
             }
         }
     }
@@ -38,13 +49,13 @@ fun AppMedica() {
 
     NavHost(navController = navController, startDestination = "buscar") {
 
-        composable("buscar") {
+        /*composable("buscar") {
             BuscarPacienteScreen(
                 volver = { navController.popBackStack() },
                 irAgregar = { navController.navigate("registro") },
                 irDetalles = { id -> /* pendiente: navegación a detalle */ }
             )
-        }
+        }*/
 
         composable("registro") {
             RegistrarPacienteScreen(
