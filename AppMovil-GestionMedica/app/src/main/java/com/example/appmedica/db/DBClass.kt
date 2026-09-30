@@ -49,4 +49,12 @@ object DBClass {
     fun getPacientes(): List<Paciente> {
         return listaDePacientes.toList()
     }
+
+    fun existeCi(ci: String): Boolean {
+        return getPacientes().any { it.ci == ci.trim() }
+    }
+
+    fun existeEmail(email: String): Boolean {
+        return getPacientes().any { it.email.equals(email.trim(), ignoreCase = true) }
+    }
 }

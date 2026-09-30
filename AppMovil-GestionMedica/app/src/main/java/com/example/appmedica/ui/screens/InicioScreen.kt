@@ -46,8 +46,6 @@ import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
 
-// Colores propios de esta pantalla. El resto (AzulClaro, AzulPildora, AzulMedio,
-// AzulOscuro, AzulPrincipal) se reutilizan de RegistrarPacienteScreen.kt.
 private val CampoBusqueda = Color(0xFFC9DBE7)
 private val AvatarGris = Color(0xFFD9D9D9)
 

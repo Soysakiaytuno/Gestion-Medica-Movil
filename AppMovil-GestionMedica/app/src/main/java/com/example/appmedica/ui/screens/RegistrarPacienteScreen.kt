@@ -24,10 +24,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,9 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.appmedica.model.Paciente
-import java.time.LocalDate
-import java.time.format.DateTimeParseException
+import com.example.appmedica.viewmodel.RegistroViewModel
 
 val AzulClaro = Color(0xFFD6F0FF)
 val AzulPildora = Color(0xFF9BBACC)
@@ -47,30 +43,13 @@ val AzulPrincipal = Color(0xFF082333)
 val FondoBlanco = Color(0xFFFFFFFF)
 val TextoOscuro = Color(0xFF1A1A1A)
 
-fun parsearFecha(texto: String): LocalDate? {
-    return try {
-        LocalDate.parse(texto.trim())
-    } catch (e: DateTimeParseException) {
-        null
-    }
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrarPacienteScreen(
     onGuardarPaciente: (Paciente) -> Unit,
-    onVolver: () -> Unit
+    onVolver: () -> Unit,
+    viewModel: RegistroViewModel = viewModel()
 ) {
-    var nombre by remember { mutableStateOf("") }
-    var apellidoPaterno by remember { mutableStateOf("") }
-    var apellidoMaterno by remember { mutableStateOf("") }
-    var ci by remember { mutableStateOf("") }
-    var fechaNacimiento by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var celular by remember { mutableStateOf("") }
-
-    var mensajeError by remember { mutableStateOf("") }
-
     Scaffold(
         topBar = {
             TopAppBar(
@@ -103,62 +82,24 @@ fun RegistrarPacienteScreen(
 
         FormularioPaciente(
             modifier = Modifier.padding(paddingValues),
-            nombre = nombre,
-            apellidoPaterno = apellidoPaterno,
-            apellidoMaterno = apellidoMaterno,
-            ci = ci,
-            fechaNacimiento = fechaNacimiento,
-            email = email,
-            celular = celular,
-            mensajeError = mensajeError,
+            nombre = viewModel.nombre,
+            apellidoPaterno = viewModel.apellidoPaterno,
+            apellidoMaterno = viewModel.apellidoMaterno,
+            ci = viewModel.ci,
+            fechaNacimiento = viewModel.fechaNacimiento,
+            email = viewModel.email,
+            celular = viewModel.celular,
+            mensajeError = viewModel.mensajeError,
 
-            onNombreChange = { nombre = it },
-            onApellidoPaternoChange = { apellidoPaterno = it },
-            onApellidoMaternoChange = { apellidoMaterno = it },
-            onCiChange = { ci = it },
-            onFechaNacimientoChange = { fechaNacimiento = it },
-            onEmailChange = { email = it },
-            onCelularChange = { celular = it },
+            onNombreChange = { viewModel.nombre = it },
+            onApellidoPaternoChange = { viewModel.apellidoPaterno = it },
+            onApellidoMaternoChange = { viewModel.apellidoMaterno = it },
+            onCiChange = { viewModel.ci = it },
+            onFechaNacimientoChange = { viewModel.fechaNacimiento = it },
+            onEmailChange = { viewModel.email = it },
+            onCelularChange = { viewModel.celular = it },
 
-            onGuardar = {
-                val fecha = parsearFecha(fechaNacimiento)
-                val ciLimpio = ci.trim()
-                val celularLimpio = celular.trim()
-
-                if (
-                    nombre.isBlank() || apellidoPaterno.isBlank() ||
-                    apellidoMaterno.isBlank() || ciLimpio.isBlank() ||
-                    fechaNacimiento.isBlank() || email.isBlank() || celularLimpio.isBlank()
-                ) {
-                    mensajeError = "Todos los campos son obligatorios."
-                } else if (ciLimpio.toLongOrNull() == null || celularLimpio.toLongOrNull() == null) {
-                    mensajeError = "El CI y el Celular deben contener solo números."
-                } else if (ciLimpio.length != 8) {
-                    // NUEVA REGLA: CI exactamente 8 dígitos
-                    mensajeError = "El CI debe tener exactamente 8 números."
-                } else if (celularLimpio.length < 8) {
-                    // NUEVA REGLA: Celular de 8 o más dígitos
-                    mensajeError = "El número de celular debe tener al menos 8 números."
-                } else if (fecha == null) {
-                    mensajeError = "Formato de fecha inválido. Usa AAAA-MM-DD (ej. 2006-05-29)."
-                } else if (fecha.isAfter(LocalDate.now())) {
-                    mensajeError = "La fecha de nacimiento no puede ser futura."
-                } else {
-                    mensajeError = ""
-                    onGuardarPaciente(
-                        Paciente(
-                            nombre = nombre.trim(),
-                            apellidoPaterno = apellidoPaterno.trim(),
-                            apellidoMaterno = apellidoMaterno.trim(),
-                            ci = ciLimpio,
-                            fechaNacimiento = fecha,
-                            email = email.trim(),
-                            celular = celularLimpio,
-                            diagnosticos = emptyList()
-                        )
-                    )
-                }
-            }
+            onGuardar = { viewModel.onGuardar(onGuardarPaciente) }
         )
     }
 }
