@@ -8,6 +8,7 @@ import com.example.appmedica.db.DBClass
 import com.example.appmedica.ui.screens.BuscarPacienteScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
 import com.example.appmedica.ui.screens.HistorialMedicoScreen
+import com.example.appmedica.ui.screens.InicioScreen
 
 @Composable
 fun AppNavegacion(){
@@ -15,8 +16,15 @@ fun AppNavegacion(){
 
     NavHost(
         navController = navController,
-        startDestination = "buscar_paciente"
+        startDestination = "inicio"
     ){
+        composable("inicio"){
+            InicioScreen(
+                irAgregarPaciente = { navController.navigate("registrar_paciente") },
+                irDetallesPaciente = { pacienteId -> navController.navigate("historial_medico")}
+            )
+        }
+
         composable("buscar_paciente"){
             BuscarPacienteScreen(
                 volver = {navController.popBackStack()},
