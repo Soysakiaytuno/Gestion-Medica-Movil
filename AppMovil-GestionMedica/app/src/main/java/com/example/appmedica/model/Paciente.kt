@@ -8,5 +8,5 @@ data class Paciente(
     val ci: String,
     val email: String,
     val celular: String,
-    val diagnostico: String = "Pendiente de diagnóstico"
+    val diagnosticos: List<Diagnostico>
 )
