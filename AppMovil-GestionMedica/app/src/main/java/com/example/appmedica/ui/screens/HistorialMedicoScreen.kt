@@ -38,11 +38,12 @@ private val TextDarkColor = Color(0xFF1A1A1A)
 fun HistorialMedicoScreen(
     paciente: Paciente?,
     onVolver: () -> Unit,
+    pacienteId: String? = null,
     viewModel: HistorialViewModel = remember { HistorialViewModel() }
 ) {
-    // Obtenemos y sincronizamos los datos del paciente y sus diagnósticos a través del ViewModel
-    LaunchedEffect(paciente) {
-        viewModel.cargarDatosHistorial(paciente)
+    // Sincronizamos los datos del paciente específico y sus diagnósticos desde la base de datos simulada
+    LaunchedEffect(paciente, pacienteId) {
+        viewModel.cargarDatosHistorial(paciente, pacienteId)
     }
 
     val pacienteActual = viewModel.pacienteActual
@@ -55,8 +56,6 @@ fun HistorialMedicoScreen(
         containerColor = Color.White
     ) { paddingValues ->
         if (pacienteActual != null) {
-            // LazyColumn permite renderizar el encabezado y apilar dinámicamente
-            // los diagnósticos uno debajo del otro con scroll eficiente
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -64,7 +63,7 @@ fun HistorialMedicoScreen(
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(22.dp)
             ) {
-                // 1. Encabezado con los datos generales del paciente
+                // 1. Encabezado con la vista previa completa del paciente
                 item {
                     SeccionVistaPreviaPaciente(
                         paciente = pacienteActual,
@@ -72,13 +71,46 @@ fun HistorialMedicoScreen(
                     )
                 }
 
-                // 2. Lista dinámica de diagnósticos obtenidos (título, fecha y descripción)
-                items(
-                    items = listaDiagnosticos,
-                    key = { diagnostico -> diagnostico.id }
-                ) { diagnostico ->
-                    ItemDiagnosticoCard(diagnostico = diagnostico)
+                // 2. Lista de diagnósticos (si tiene diagnósticos registrados)
+                if (listaDiagnosticos.isNotEmpty()) {
+                    items(
+                        items = listaDiagnosticos,
+                        key = { diagnostico -> diagnostico.id }
+                    ) { diagnostico ->
+                        ItemDiagnosticoCard(diagnostico = diagnostico)
+                    }
+                } else {
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(LightBlueCard)
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Este paciente aún no tiene diagnósticos registrados.",
+                                color = TextDarkColor,
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
                 }
+            }
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No se encontró información del paciente.",
+                    color = TextDarkColor,
+                    fontSize = 15.sp
+                )
             }
         }
     }
@@ -114,7 +146,7 @@ fun TopBarHistorial(onVolver: () -> Unit) {
 
         Text(
             text = "Historial medico",
-            color = HeaderTitleColor,
+            color = Color.White,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
@@ -131,7 +163,7 @@ fun SeccionVistaPreviaPaciente(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Recuadro azul oscuro con los datos generales del paciente
+        // Recuadro azul oscuro con todos los datos del paciente como vista previa
         Box(
             modifier = Modifier
                 .weight(1f)
@@ -160,6 +192,11 @@ fun SeccionVistaPreviaPaciente(
                 )
                 Text(
                     text = "Celular: ${paciente.celular}",
+                    color = Color.White.copy(alpha = 0.9f),
+                    fontSize = 13.sp
+                )
+                Text(
+                    text = "Fecha Nac.: ${paciente.fechaNacimiento}",
                     color = Color.White.copy(alpha = 0.9f),
                     fontSize = 13.sp
                 )
@@ -194,8 +231,8 @@ fun SeccionVistaPreviaPaciente(
 }
 
 /**
- * Componente reutilizable y desacoplado (Stateless) que representa
- * un diagnóstico individual con su título, fecha, descripción y línea divisoria.
+ * Componente reutilizable que representa un diagnóstico individual
+ * con su título en píldora, recuadro de fecha y descripción, y línea divisoria.
  */
 @Composable
 fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
@@ -203,7 +240,7 @@ fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // 1. Píldora superior con el Título del diagnóstico (ej. "Asma")
+        // 1. Píldora superior con el título del diagnóstico
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -220,7 +257,7 @@ fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
             )
         }
 
-        // 2. Recuadro azul claro con la Fecha y la Descripción detallada
+        // 2. Recuadro azul claro con la fecha y descripción
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -247,7 +284,7 @@ fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
             }
         }
 
-        // 3. Línea divisoria inferior para separar cada diagnóstico
+        // 3. Línea divisoria inferior
         HorizontalDivider(
             modifier = Modifier
                 .fillMaxWidth()
