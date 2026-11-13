@@ -11,12 +11,16 @@ import com.example.appmedica.model.RolDemo
 import com.example.appmedica.repository.CitaRepository
 import com.example.appmedica.repository.PacienteRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -25,16 +29,23 @@ data class AgendaDatos(
     val pacientes: List<Paciente> = emptyList(),
     val citas: List<Cita> = emptyList(),
     val cargando: Boolean = true,
-    val error: String = ""
+    val error: String = "",
+    val consulta: ConsultaAgenda? = null
 )
+
+data class ConsultaAgenda(val estado: EstadoCita?, val pacienteId: String?)
 
 data class CitasEstado(
     val rol: RolDemo = RolDemo.MEDICO,
     val pacienteDemoId: String = "",
     val formulario: FormularioCita = FormularioCita(),
     val ocupado: Boolean = false,
-    val error: String = ""
-)
+    val error: String = "",
+    val filtro: EstadoCita? = null
+) {
+    val consulta: ConsultaAgenda
+        get() = ConsultaAgenda(filtro, pacienteDemoId.takeIf { rol == RolDemo.PACIENTE })
+}
 
 data class DetalleCitaDatos(
     val cita: Cita? = null,
@@ -46,15 +57,36 @@ class CitasViewModel(
     private val repository: CitaRepository,
     pacientes: PacienteRepository
 ) : ViewModel() {
-    val datos = combine(pacientes.pacientes, repository.citas) { listaPacientes, listaCitas ->
-        AgendaDatos(listaPacientes, listaCitas, cargando = false)
-    }.catch { error ->
-        if (error is CancellationException) throw error
-        emit(AgendaDatos(cargando = false, error = "No se pudo cargar la agenda. Vuelve a abrir la aplicación."))
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AgendaDatos())
-
     private val mutableEstado = MutableStateFlow(CitasEstado())
     val estado = mutableEstado.asStateFlow()
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val datos = estado.map { it.consulta }.distinctUntilChanged()
+        .flatMapLatest { consulta ->
+            combine(
+                pacientes.pacientes,
+                repository.observarAgenda(consulta.estado, consulta.pacienteId)
+            ) { listaPacientes, listaCitas ->
+                AgendaDatos(listaPacientes, listaCitas, cargando = false, consulta = consulta)
+            }.onStart {
+                emit(AgendaDatos(consulta = consulta))
+            }.catch { error ->
+                if (error is CancellationException) throw error
+                emit(AgendaDatos(cargando = false, error = "No se pudo cargar la agenda.", consulta = consulta))
+            }
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AgendaDatos())
+
+    val resumenProxima = repository.observarProxima().map { cita ->
+        cita?.let { "${it.fecha} · ${it.hora}\n${it.motivo}\n${it.estado.etiqueta}" }
+            ?: "No hay próximas citas."
+    }.catch { error ->
+        if (error is CancellationException) throw error
+        emit("No se pudo cargar la próxima cita.")
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "Cargando agenda…")
+
+    fun seleccionarFiltro(filtro: EstadoCita?) {
+        mutableEstado.update { it.copy(filtro = filtro) }
+    }
 
     fun observarDetalle(id: String) = repository.observarCita(id)
         .map { DetalleCitaDatos(cita = it, cargando = false) }

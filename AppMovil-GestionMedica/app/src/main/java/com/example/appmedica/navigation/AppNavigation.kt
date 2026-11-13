@@ -25,8 +25,6 @@ import com.example.appmedica.viewmodel.DetalleCitaDatos
 import com.example.appmedica.ui.screens.AgendaCitasScreen
 import com.example.appmedica.ui.screens.FormularioCitaScreen
 import com.example.appmedica.ui.screens.DetalleCitaScreen
-import com.example.appmedica.model.EstadoCita
-import java.time.LocalDateTime
 
 private const val INICIO = "inicio"
 private const val BUSCAR_PACIENTE = "buscar_paciente"
@@ -52,6 +50,7 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
 
     NavHost(navController = navController, startDestination = INICIO) {
         composable(INICIO) {
+            val resumenProxima by agenda.resumenProxima.collectAsStateWithLifecycle()
             val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
             val query by busqueda.query.collectAsStateWithLifecycle()
             val pacientes by busqueda.pacientes.collectAsStateWithLifecycle()
@@ -65,14 +64,13 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 irAgregarPaciente = registrar,
                 irDetallesPaciente = abrirHistorial,
                 irAgenda = { navController.navigate("citas") { launchSingleTop = true } },
-                resumenCita = if (datosAgenda.cargando) "Cargando agenda…" else if (datosAgenda.error.isNotEmpty()) datosAgenda.error else datosAgenda.citas.firstOrNull {
-                    it.estado != EstadoCita.RECHAZADA && LocalDateTime.parse("${it.fecha}T${it.hora}").isAfter(LocalDateTime.now())
-                }?.let { "${it.fecha} · ${it.hora}\n${it.motivo}\n${it.estado.etiqueta}" } ?: "No hay próximas citas."
+                resumenCita = resumenProxima
             )
         }
 
         composable("citas") {
             AgendaCitasScreen(datosAgenda, estadoAgenda, agenda::seleccionarRol, agenda::seleccionarPaciente,
+                onFiltro = agenda::seleccionarFiltro,
                 onNueva = {
                     agenda.prepararFormulario()
                     navController.navigate("formulario_cita") { launchSingleTop = true }

@@ -66,6 +66,7 @@ private fun MensajeOperacion(estado: CitasEstado) {
 fun AgendaCitasScreen(
     datos: AgendaDatos, estado: CitasEstado,
     onRol: (RolDemo) -> Unit, onPaciente: (String) -> Unit,
+    onFiltro: (EstadoCita?) -> Unit,
     onNueva: () -> Unit, onDetalle: (String) -> Unit, onVolver: () -> Unit
 ) {
     MarcoCitas("Agenda de citas", onVolver) {
@@ -74,18 +75,21 @@ fun AgendaCitasScreen(
             FilterChip(selected = estado.rol == RolDemo.MEDICO, onClick = { onRol(RolDemo.MEDICO) }, label = { Text("Médico demo") }, enabled = !estado.ocupado)
             FilterChip(selected = estado.rol == RolDemo.PACIENTE, onClick = { onRol(RolDemo.PACIENTE) }, label = { Text("Paciente demo") }, enabled = !estado.ocupado)
         }
-        if (datos.cargando) CircularProgressIndicator()
-        if (datos.error.isNotEmpty()) Text(datos.error, color = TextoError)
+        val consultaActual = datos.consulta == estado.consulta
+        val cargando = datos.cargando || !consultaActual
+        if (cargando) CircularProgressIndicator()
+        if (consultaActual && datos.error.isNotEmpty()) Text(datos.error, color = TextoError)
         MensajeOperacion(estado)
         if (estado.rol == RolDemo.MEDICO) {
             Button(onClick = onNueva, enabled = !estado.ocupado && !datos.cargando && datos.pacientes.isNotEmpty()) { Text("Crear cita") }
-            if (!datos.cargando && datos.pacientes.isEmpty()) Text("Primero agrega un paciente desde el inicio.")
+            if (!cargando && datos.error.isEmpty() && datos.pacientes.isEmpty()) Text("Primero agrega un paciente desde el inicio.")
         } else {
             Text("Selecciona el paciente que representarás en esta demostración.")
             SelectorPaciente(datos.pacientes, estado.pacienteDemoId, !estado.ocupado, onPaciente)
         }
-        val visibles = if (estado.rol == RolDemo.MEDICO) datos.citas else datos.citas.filter { it.pacienteId == estado.pacienteDemoId }
-        if (!datos.cargando && datos.error.isEmpty() && visibles.isEmpty()) {
+        FiltrosCita(estado.filtro, onFiltro)
+        val visibles = if (consultaActual) datos.citas else emptyList()
+        if (!cargando && datos.error.isEmpty() && visibles.isEmpty()) {
             Text(if (estado.rol == RolDemo.PACIENTE && estado.pacienteDemoId.isEmpty()) "Selecciona un paciente para ver sus propuestas." else "No hay citas para mostrar.")
         }
         visibles.forEach { cita ->
@@ -99,6 +103,21 @@ fun AgendaCitasScreen(
                     Text("Ver cita", color = AzulOscuro)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun FiltrosCita(seleccion: EstadoCita?, onFiltro: (EstadoCita?) -> Unit) {
+    Column {
+        Text("Estado de las citas", color = AzulPrincipal)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = seleccion == null, onClick = { onFiltro(null) }, label = { Text("Todas") })
+            FilterChip(selected = seleccion == EstadoCita.PENDIENTE, onClick = { onFiltro(EstadoCita.PENDIENTE) }, label = { Text("Pendientes") })
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = seleccion == EstadoCita.ACEPTADA, onClick = { onFiltro(EstadoCita.ACEPTADA) }, label = { Text("Aceptadas") })
+            FilterChip(selected = seleccion == EstadoCita.RECHAZADA, onClick = { onFiltro(EstadoCita.RECHAZADA) }, label = { Text("Rechazadas") })
         }
     }
 }

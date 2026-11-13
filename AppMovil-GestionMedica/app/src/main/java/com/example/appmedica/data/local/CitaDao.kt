@@ -14,6 +14,22 @@ interface CitaDao {
     @Query("SELECT * FROM citas ORDER BY fecha, hora, id")
     fun observarTodas(): Flow<List<CitaEntity>>
 
+    @Query("""
+        SELECT * FROM citas
+        WHERE (:estado IS NULL OR estado = :estado)
+          AND (:pacienteId IS NULL OR pacienteId = :pacienteId)
+        ORDER BY fecha, hora, id
+    """)
+    fun observarFiltradas(estado: EstadoCita?, pacienteId: String?): Flow<List<CitaEntity>>
+
+    @Query("""
+        SELECT * FROM citas
+        WHERE estado != 'RECHAZADA' AND fecha || ' ' || hora > strftime('%Y-%m-%d %H:%M', 'now', 'localtime')
+        ORDER BY fecha, hora, id
+        LIMIT 1
+    """)
+    fun observarProxima(): Flow<CitaEntity?>
+
     @Query("SELECT * FROM citas WHERE id = :id")
     fun observarPorId(id: String): Flow<CitaEntity?>
 
