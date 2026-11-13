@@ -12,17 +12,16 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -49,27 +48,11 @@ import java.util.Locale
 private val CampoBusqueda = Color(0xFFC9DBE7)
 private val AvatarGris = Color(0xFFD9D9D9)
 
-/** Datos de la próxima consulta (aún no existe un modelo de citas en el proyecto). */
-data class ConsultaProxima(
-    val paciente: String,
-    val motivo: String,
-    val hora: String,
-    val lugar: String
-)
-
 @Composable
 fun InicioScreen(
     nombreDoctor: String = "Dr. Jaldín",
-    consultaProxima: ConsultaProxima? = ConsultaProxima(
-        paciente = "Joe Jaldin",
-        motivo = "Resfrío",
-        hora = "8:30",
-        lugar = "Consultorio medico"
-    ),
-    irAgendarCita: () -> Unit = {},
-    irReceta: () -> Unit = {},
+    irBuscarPaciente: () -> Unit = {},
     irAgregarPaciente: () -> Unit = {},
-    irDetallesConsulta: () -> Unit = {},
     irDetallesPaciente: (String) -> Unit = {},
     viewModel: BuscarPacienteViewModel = viewModel()
 ) {
@@ -79,15 +62,15 @@ fun InicioScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .navigationBarsPadding(),
+            .navigationBarsPadding()
+            .imePadding(),
         contentPadding = PaddingValues(bottom = 24.dp)
     ) {
         // Encabezado oscuro con saludo y accesos rápidos
         item {
             EncabezadoInicio(
                 nombreDoctor = nombreDoctor,
-                irAgendarCita = irAgendarCita,
-                irReceta = irReceta,
+                irBuscarPaciente = irBuscarPaciente,
                 irAgregarPaciente = irAgregarPaciente
             )
         }
@@ -95,26 +78,23 @@ fun InicioScreen(
         // Próxima consulta
         item {
             Text(
-                text = "Proxima Consulta",
+                text = "Próxima consulta",
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 10.dp)
             )
         }
         item {
-            if (consultaProxima != null) {
-                TarjetaConsulta(
-                    consulta = consultaProxima,
-                    onVerDetalles = irDetallesConsulta,
-                    modifier = Modifier.padding(horizontal = 20.dp)
-                )
-            } else {
-                Text(
-                    text = "No hay consultas programadas",
-                    color = AzulMedio,
-                    modifier = Modifier.padding(horizontal = 20.dp)
-                )
-            }
+            Text(
+                text = "La agenda de citas está pendiente.",
+                color = AzulPrincipal,
+                modifier = Modifier
+                    .padding(horizontal = 20.dp)
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(AzulClaro)
+                    .padding(16.dp)
+            )
         }
 
         // Buscador
@@ -198,7 +178,7 @@ fun InicioScreen(
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(text = "Mas detalles", color = AzulPrincipal, fontSize = 12.sp)
+                    Text(text = "Más detalles", color = AzulPrincipal, fontSize = 12.sp)
                 }
             }
         }
@@ -208,8 +188,7 @@ fun InicioScreen(
 @Composable
 private fun EncabezadoInicio(
     nombreDoctor: String,
-    irAgendarCita: () -> Unit,
-    irReceta: () -> Unit,
+    irBuscarPaciente: () -> Unit,
     irAgregarPaciente: () -> Unit
 ) {
     Column(
@@ -250,15 +229,21 @@ private fun EncabezadoInicio(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            AccesoRapido("Agendar cita", irAgendarCita, Modifier.weight(1f))
-            AccesoRapido("Receta", irReceta, Modifier.weight(1f))
-            AccesoRapido("Agregar paciente", irAgregarPaciente, Modifier.weight(1f))
+            AccesoRapido("Buscar paciente", Modifier.weight(1f), irBuscarPaciente)
+            AccesoRapido("Agregar paciente", Modifier.weight(1f), irAgregarPaciente)
         }
+
+        Text(
+            text = "Pendientes: Agendar cita y Receta",
+            color = Color.White,
+            fontSize = 12.sp,
+            modifier = Modifier.padding(top = 12.dp)
+        )
     }
 }
 
 @Composable
-private fun AccesoRapido(texto: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
         modifier = modifier
             .height(88.dp)
@@ -274,62 +259,6 @@ private fun AccesoRapido(texto: String, onClick: () -> Unit, modifier: Modifier 
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium
         )
-    }
-}
-
-@Composable
-private fun TarjetaConsulta(
-    consulta: ConsultaProxima,
-    onVerDetalles: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(AzulClaro)
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Column {
-            Text(
-                text = consulta.paciente,
-                color = AzulPrincipal,
-                fontWeight = FontWeight.Medium
-            )
-            Text(text = consulta.motivo, color = AzulPrincipal, fontSize = 13.sp)
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            Row(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(AzulOscuro)
-                    .clickable { onVerDetalles() }
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(text = "Ver detalles", color = Color.White, fontSize = 12.sp)
-                Spacer(modifier = Modifier.width(6.dp))
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(14.dp)
-                )
-            }
-        }
-
-        Column(horizontalAlignment = Alignment.End) {
-            Text(
-                text = consulta.hora,
-                color = AzulPrincipal,
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Text(text = consulta.lugar, color = AzulPrincipal, fontSize = 13.sp)
-        }
     }
 }
 

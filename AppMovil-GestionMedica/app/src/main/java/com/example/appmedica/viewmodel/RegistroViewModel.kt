@@ -34,14 +34,10 @@ class RegistroViewModel : ViewModel() {
             fechaNacimiento.isBlank() || email.isBlank() || celularLimpio.isBlank()
         ) {
             mensajeError = "Todos los campos son obligatorios."
-        } else if (ciLimpio.toLongOrNull() == null || celularLimpio.toLongOrNull() == null) {
-            mensajeError = "El CI y el Celular deben contener solo números."
-        } else if (ciLimpio.length != 8) {
-            // NUEVA REGLA: CI exactamente 8 dígitos
-            mensajeError = "El CI debe tener exactamente 8 números."
-        } else if (celularLimpio.length < 8) {
-            // NUEVA REGLA: Celular de 8 o más dígitos
-            mensajeError = "El número de celular debe tener al menos 8 números."
+        } else if (ciLimpio.length !in 7..8 || ciLimpio.any { it !in '0'..'9' }) {
+            mensajeError = "El CI debe tener 7 u 8 dígitos, sin signos ni espacios internos."
+        } else if (celularLimpio.length < 8 || celularLimpio.any { it !in '0'..'9' }) {
+            mensajeError = "El celular debe tener al menos 8 dígitos, sin signos ni espacios internos."
         } else if (!Patterns.EMAIL_ADDRESS.matcher(emailLimpio).matches()) {
             // NUEVA VALIDACIÓN: formato de email
             mensajeError = "El formato del email no es válido (ej. nombre@correo.com)."

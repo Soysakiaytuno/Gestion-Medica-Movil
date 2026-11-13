@@ -1,13 +1,12 @@
 package com.example.appmedica.db
 
-import android.annotation.SuppressLint
+import androidx.compose.runtime.mutableStateListOf
 import com.example.appmedica.model.Diagnostico
 import com.example.appmedica.model.Paciente
 import java.time.LocalDate
 
 object DBClass {
-    @SuppressLint("NewApi")
-    private val listaDePacientes = mutableListOf(
+    private val listaDePacientes = mutableStateListOf(
         Paciente(
             id = "paciente-josue-01",
             nombre = "Josue",
@@ -34,12 +33,6 @@ object DBClass {
 
     fun agregar(newPaciente: Paciente) {
         listaDePacientes.add(newPaciente)
-    }
-
-    fun getPaciente(nombre: String): Paciente? {
-        return listaDePacientes.find {
-            it.nombre.equals(nombre, ignoreCase = true) || it.id == nombre
-        }
     }
 
     fun getPacientePorId(id: String): Paciente? {

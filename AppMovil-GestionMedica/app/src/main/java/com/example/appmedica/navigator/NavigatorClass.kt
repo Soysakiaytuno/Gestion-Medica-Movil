@@ -23,11 +23,14 @@ fun AppNavegacion() {
         // Pantalla Principal (Inicio)
         composable("inicio") {
             InicioScreen(
-                irAgendarCita = { navController.navigate("buscar_paciente") },
-                irReceta = { navController.navigate("buscar_paciente") },
-                irAgregarPaciente = { navController.navigate("registrar_paciente") },
+                irBuscarPaciente = {
+                    navController.navigate("buscar_paciente") { launchSingleTop = true }
+                },
+                irAgregarPaciente = {
+                    navController.navigate("registrar_paciente") { launchSingleTop = true }
+                },
                 irDetallesPaciente = { pacienteId ->
-                    navController.navigate("historial_medico/$pacienteId")
+                    navController.navigate("historial_medico/$pacienteId") { launchSingleTop = true }
                 }
             )
         }
@@ -36,9 +39,11 @@ fun AppNavegacion() {
         composable("buscar_paciente") {
             BuscarPacienteScreen(
                 volver = { navController.popBackStack() },
-                irAgregar = { navController.navigate("registrar_paciente") },
+                irAgregar = {
+                    navController.navigate("registrar_paciente") { launchSingleTop = true }
+                },
                 irDetalles = { pacienteId ->
-                    navController.navigate("historial_medico/$pacienteId")
+                    navController.navigate("historial_medico/$pacienteId") { launchSingleTop = true }
                 }
             )
         }
@@ -61,20 +66,11 @@ fun AppNavegacion() {
                 navArgument("pacienteId") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            val pacienteId = backStackEntry.arguments?.getString("pacienteId") ?: ""
-            val paciente = DBClass.getPacientePorId(pacienteId) ?: DBClass.getPaciente(pacienteId)
+            val pacienteId = backStackEntry.arguments?.getString("pacienteId")
+            val paciente = pacienteId?.let(DBClass::getPacientePorId)
 
             HistorialMedicoScreen(
                 paciente = paciente,
-                pacienteId = pacienteId,
-                onVolver = { navController.popBackStack() }
-            )
-        }
-
-        // Ruta de respaldo para historial médico
-        composable("historial_medico") {
-            HistorialMedicoScreen(
-                paciente = DBClass.getPacientes().firstOrNull(),
                 onVolver = { navController.popBackStack() }
             )
         }

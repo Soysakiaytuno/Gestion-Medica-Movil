@@ -12,8 +12,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.appmedica.model.Diagnostico
 import com.example.appmedica.model.Paciente
-import com.example.appmedica.viewmodel.HistorialViewModel
 
 // Paleta de colores basada en el diseño de referencia
 private val DarkNavyBlue = Color(0xFF0B2536)
@@ -37,25 +34,16 @@ private val TextDarkColor = Color(0xFF1A1A1A)
 @Composable
 fun HistorialMedicoScreen(
     paciente: Paciente?,
-    onVolver: () -> Unit,
-    pacienteId: String? = null,
-    viewModel: HistorialViewModel = remember { HistorialViewModel() }
+    onVolver: () -> Unit
 ) {
-    // Sincronizamos los datos del paciente específico y sus diagnósticos desde la base de datos simulada
-    LaunchedEffect(paciente, pacienteId) {
-        viewModel.cargarDatosHistorial(paciente, pacienteId)
-    }
-
-    val pacienteActual = viewModel.pacienteActual
-    val listaDiagnosticos = viewModel.listaDiagnosticos
-
     Scaffold(
         topBar = {
             TopBarHistorial(onVolver = onVolver)
         },
         containerColor = Color.White
     ) { paddingValues ->
-        if (pacienteActual != null) {
+        if (paciente != null) {
+            val listaDiagnosticos = paciente.diagnosticos
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -66,7 +54,7 @@ fun HistorialMedicoScreen(
                 // 1. Encabezado con la vista previa completa del paciente
                 item {
                     SeccionVistaPreviaPaciente(
-                        paciente = pacienteActual,
+                        paciente = paciente,
                         totalConsultas = listaDiagnosticos.size
                     )
                 }

@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -81,7 +83,10 @@ fun RegistrarPacienteScreen(
     ) { paddingValues ->
 
         FormularioPaciente(
-            modifier = Modifier.padding(paddingValues),
+            modifier = Modifier
+                .padding(paddingValues)
+                .consumeWindowInsets(paddingValues)
+                .imePadding(),
             nombre = viewModel.nombre,
             apellidoPaterno = viewModel.apellidoPaterno,
             apellidoMaterno = viewModel.apellidoMaterno,
@@ -137,22 +142,14 @@ fun FormularioPaciente(
         CampoPersonalizado("Nombre:", nombre, onValorCambiado = onNombreChange)
         CampoPersonalizado("Apellido Paterno:", apellidoPaterno, onValorCambiado = onApellidoPaternoChange)
         CampoPersonalizado("Apellido Materno:", apellidoMaterno, onValorCambiado = onApellidoMaternoChange)
-        CampoPersonalizado("CI:", ci, KeyboardType.Number, onCiChange)
+        CampoPersonalizado("CI (7 u 8 dígitos):", ci, KeyboardType.Number, onCiChange)
         CampoPersonalizado("Fecha Nacimiento (AAAA-MM-DD):", fechaNacimiento, onValorCambiado = onFechaNacimientoChange)
         CampoPersonalizado("Email:", email, KeyboardType.Email, onEmailChange)
-        CampoPersonalizado("Numero de Celular:", celular, KeyboardType.Phone, onCelularChange)
+        CampoPersonalizado("Celular (mínimo 8 dígitos):", celular, KeyboardType.Phone, onCelularChange)
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Button(
-            onClick = { /* Lógica futura para imágenes */ },
-            colors = ButtonDefaults.buttonColors(containerColor = AzulPildora),
-            modifier = Modifier
-                .fillMaxWidth(0.7f)
-                .height(48.dp)
-        ) {
-            Text("Agregar imagen", color = TextoOscuro)
-        }
+        Text("Agregar imagen (pendiente)", color = AzulPrincipal)
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -169,8 +166,7 @@ fun FormularioPaciente(
             onClick = onGuardar,
             colors = ButtonDefaults.buttonColors(containerColor = AzulOscuro),
             modifier = Modifier
-                .fillMaxWidth(0.5f)
-                .height(48.dp)
+                .fillMaxWidth()
         ) {
             Text("Guardar Paciente", color = FondoBlanco)
         }
