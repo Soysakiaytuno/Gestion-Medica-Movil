@@ -3,6 +3,7 @@ package com.example.appmedica.navigation
 import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -20,6 +21,7 @@ import com.example.appmedica.viewmodel.HistorialViewModel
 import com.example.appmedica.viewmodel.RegistroViewModel
 import com.example.appmedica.repository.CitaRepository
 import com.example.appmedica.viewmodel.CitasViewModel
+import com.example.appmedica.viewmodel.DetalleCitaDatos
 import com.example.appmedica.ui.screens.AgendaCitasScreen
 import com.example.appmedica.ui.screens.FormularioCitaScreen
 import com.example.appmedica.ui.screens.DetalleCitaScreen
@@ -87,7 +89,9 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
         }
         composable("cita/{citaId}", arguments = listOf(navArgument("citaId") { type = NavType.StringType })) { entrada ->
             val id = entrada.arguments?.getString("citaId").orEmpty()
-            DetalleCitaScreen(id, datosAgenda, estadoAgenda,
+            val detalle by remember(agenda, id) { agenda.observarDetalle(id) }
+                .collectAsStateWithLifecycle(initialValue = DetalleCitaDatos())
+            DetalleCitaScreen(id, detalle, datosAgenda.pacientes, estadoAgenda,
                 onEditar = { cita ->
                     agenda.prepararFormulario(cita)
                     navController.navigate("formulario_cita") { launchSingleTop = true }

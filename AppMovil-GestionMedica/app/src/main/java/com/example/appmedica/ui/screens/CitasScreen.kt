@@ -12,6 +12,7 @@ import com.example.appmedica.model.*
 import com.example.appmedica.ui.theme.*
 import com.example.appmedica.viewmodel.AgendaDatos
 import com.example.appmedica.viewmodel.CitasEstado
+import com.example.appmedica.viewmodel.DetalleCitaDatos
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,17 +122,17 @@ fun FormularioCitaScreen(datos: AgendaDatos, estado: CitasEstado, onCambio: (For
 }
 
 @Composable
-fun DetalleCitaScreen(id: String, datos: AgendaDatos, estado: CitasEstado, onEditar: (Cita) -> Unit, onResponder: (EstadoCita) -> Unit, onEliminar: () -> Unit, onVolver: () -> Unit) {
-    val cita = datos.citas.find { it.id == id }
+fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Paciente>, estado: CitasEstado, onEditar: (Cita) -> Unit, onResponder: (EstadoCita) -> Unit, onEliminar: () -> Unit, onVolver: () -> Unit) {
+    val cita = detalle.cita
     var confirmar by rememberSaveable(id) { mutableStateOf(false) }
     MarcoCitas("Detalle de cita", onVolver) {
         Text("${if (estado.rol == RolDemo.MEDICO) "Médico" else "Paciente"} demo · datos locales")
-        if (datos.cargando) CircularProgressIndicator()
-        else if (datos.error.isNotEmpty()) Text(datos.error, color = TextoError)
+        if (detalle.cargando) CircularProgressIndicator()
+        else if (detalle.error.isNotEmpty()) Text(detalle.error, color = TextoError)
         else if (cita == null) Text("La cita ya no está disponible.")
         else if (estado.rol == RolDemo.PACIENTE && estado.pacienteDemoId != cita.pacienteId) Text("Esta cita no corresponde al paciente seleccionado.")
         else {
-            val paciente = datos.pacientes.find { it.id == cita.pacienteId }
+            val paciente = pacientes.find { it.id == cita.pacienteId }
             Text(paciente?.let { "${it.nombre} ${it.apellidoPaterno} ${it.apellidoMaterno}" } ?: "Paciente", style = MaterialTheme.typography.titleLarge)
             Text("Fecha: ${cita.fecha}")
             Text("Hora: ${cita.hora}")
@@ -147,11 +148,11 @@ fun DetalleCitaScreen(id: String, datos: AgendaDatos, estado: CitasEstado, onEdi
                 OutlinedButton(onClick = { onResponder(EstadoCita.RECHAZADA) }, enabled = !estado.ocupado) { Text("Rechazar cita") }
             } else Text("Tu respuesta ya fue registrada.")
         }
+        if (confirmar && cita != null && estado.rol == RolDemo.MEDICO) AlertDialog(
+            onDismissRequest = { confirmar = false }, title = { Text("¿Eliminar esta cita?") },
+            text = { Text("Se eliminará la cita de ${cita.fecha} a las ${cita.hora}. Esta acción no se puede deshacer.") },
+            confirmButton = { TextButton(onClick = { confirmar = false; onEliminar() }) { Text("Eliminar") } },
+            dismissButton = { TextButton(onClick = { confirmar = false }) { Text("Conservar") } }
+        )
     }
-    if (confirmar && cita != null && estado.rol == RolDemo.MEDICO) AlertDialog(
-        onDismissRequest = { confirmar = false }, title = { Text("¿Eliminar esta cita?") },
-        text = { Text("Se eliminará la cita de ${cita.fecha} a las ${cita.hora}. Esta acción no se puede deshacer.") },
-        confirmButton = { TextButton(onClick = { confirmar = false; onEliminar() }) { Text("Eliminar") } },
-        dismissButton = { TextButton(onClick = { confirmar = false }) { Text("Conservar") } }
-    )
 }

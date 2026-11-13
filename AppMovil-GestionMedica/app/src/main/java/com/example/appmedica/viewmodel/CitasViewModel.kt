@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -35,6 +36,12 @@ data class CitasEstado(
     val error: String = ""
 )
 
+data class DetalleCitaDatos(
+    val cita: Cita? = null,
+    val cargando: Boolean = true,
+    val error: String = ""
+)
+
 class CitasViewModel(
     private val repository: CitaRepository,
     pacientes: PacienteRepository
@@ -48,6 +55,13 @@ class CitasViewModel(
 
     private val mutableEstado = MutableStateFlow(CitasEstado())
     val estado = mutableEstado.asStateFlow()
+
+    fun observarDetalle(id: String) = repository.observarCita(id)
+        .map { DetalleCitaDatos(cita = it, cargando = false) }
+        .catch { error ->
+            if (error is CancellationException) throw error
+            emit(DetalleCitaDatos(cargando = false, error = "No se pudo cargar la cita."))
+        }
 
     fun seleccionarRol(rol: RolDemo) {
         if (!estado.value.ocupado) mutableEstado.update { it.copy(rol = rol, error = "") }
