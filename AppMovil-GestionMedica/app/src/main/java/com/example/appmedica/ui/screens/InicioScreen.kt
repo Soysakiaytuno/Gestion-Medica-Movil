@@ -37,31 +37,34 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.appmedica.model.Paciente
 import com.example.appmedica.model.calcularEdad
-import com.example.appmedica.viewmodel.BuscarPacienteViewModel
+import com.example.appmedica.ui.theme.AvatarInicio
+import com.example.appmedica.ui.theme.AzulClaro
+import com.example.appmedica.ui.theme.AzulMedio
+import com.example.appmedica.ui.theme.AzulPildora
+import com.example.appmedica.ui.theme.AzulPrincipal
+import com.example.appmedica.ui.theme.FondoBlanco
+import com.example.appmedica.ui.theme.FondoBusquedaInicio
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
 
-private val CampoBusqueda = Color(0xFFC9DBE7)
-private val AvatarGris = Color(0xFFD9D9D9)
-
 @Composable
 fun InicioScreen(
+    query: String,
+    pacientes: List<Paciente>,
+    onQueryChange: (String) -> Unit,
     nombreDoctor: String = "Dr. Jaldín",
     irBuscarPaciente: () -> Unit = {},
     irAgregarPaciente: () -> Unit = {},
-    irDetallesPaciente: (String) -> Unit = {},
-    viewModel: BuscarPacienteViewModel = viewModel()
+    irDetallesPaciente: (String) -> Unit = {}
 ) {
-    val pacientes = viewModel.pacientesFiltrados()
-
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(FondoBlanco)
             .navigationBarsPadding()
             .imePadding(),
         contentPadding = PaddingValues(bottom = 24.dp)
@@ -100,8 +103,8 @@ fun InicioScreen(
         // Buscador
         item {
             TextField(
-                value = viewModel.query,
-                onValueChange = { viewModel.onQueryChange(it) },
+                value = query,
+                onValueChange = onQueryChange,
                 placeholder = { Text(text = "Buscar por nombre", color = AzulMedio) },
                 trailingIcon = {
                     Icon(
@@ -113,8 +116,8 @@ fun InicioScreen(
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = TextFieldDefaults.colors(
-                    focusedContainerColor = CampoBusqueda,
-                    unfocusedContainerColor = CampoBusqueda,
+                    focusedContainerColor = FondoBusquedaInicio,
+                    unfocusedContainerColor = FondoBusquedaInicio,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     cursorColor = AzulPrincipal,
@@ -205,11 +208,11 @@ private fun EncabezadoInicio(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = fechaDeHoy(), color = Color.White, fontSize = 12.sp)
+                Text(text = fechaDeHoy(), color = FondoBlanco, fontSize = 12.sp)
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "${saludo()}, $nombreDoctor",
-                    color = Color.White,
+                    color = FondoBlanco,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -219,7 +222,7 @@ private fun EncabezadoInicio(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(AvatarGris)
+                    .background(AvatarInicio)
             )
         }
 
@@ -235,7 +238,7 @@ private fun EncabezadoInicio(
 
         Text(
             text = "Pendientes: Agendar cita y Receta",
-            color = Color.White,
+            color = FondoBlanco,
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 12.dp)
         )
@@ -288,6 +291,6 @@ private fun fechaDeHoy(): String {
 @Composable
 private fun InicioScreenPreview() {
     MaterialTheme {
-        InicioScreen()
+        InicioScreen(query = "", pacientes = emptyList(), onQueryChange = {})
     }
 }

@@ -4,7 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.appmedica.db.DBClass
+import com.example.appmedica.data.local.PacientesEnMemoria
 import com.example.appmedica.model.Paciente
 
 class BuscarPacienteViewModel : ViewModel() {
@@ -18,7 +18,7 @@ class BuscarPacienteViewModel : ViewModel() {
 
     fun pacientesFiltrados(): List<Paciente> {
         val busqueda = query.trim()
-        val todos = DBClass.getPacientes()
+        val todos = PacientesEnMemoria.getPacientes()
         if (busqueda.isEmpty()) return todos
 
         return todos.filter {

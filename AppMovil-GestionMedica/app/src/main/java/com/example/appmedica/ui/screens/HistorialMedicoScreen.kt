@@ -15,21 +15,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.appmedica.model.Diagnostico
 import com.example.appmedica.model.Paciente
-
-// Paleta de colores basada en el diseño de referencia
-private val DarkNavyBlue = Color(0xFF0B2536)
-private val BackButtonBg = Color(0xFF1E3A4C)
-private val HeaderTitleColor = Color(0xFF6B8496)
-private val PillBlueGray = Color(0xFF96B3C4)
-private val LightBlueCard = Color(0xFFD6EEFF)
-private val TextDarkColor = Color(0xFF1A1A1A)
+import com.example.appmedica.ui.theme.DivisorHistorial
+import com.example.appmedica.ui.theme.FondoAvatarHistorial
+import com.example.appmedica.ui.theme.FondoBlanco
+import com.example.appmedica.ui.theme.FondoEncabezadoHistorial
+import com.example.appmedica.ui.theme.FondoTarjetaDiagnostico
+import com.example.appmedica.ui.theme.FondoTituloDiagnostico
+import com.example.appmedica.ui.theme.FondoVolverHistorial
+import com.example.appmedica.ui.theme.TextoOscuro
 
 @Composable
 fun HistorialMedicoScreen(
@@ -40,7 +39,7 @@ fun HistorialMedicoScreen(
         topBar = {
             TopBarHistorial(onVolver = onVolver)
         },
-        containerColor = Color.White
+        containerColor = FondoBlanco
     ) { paddingValues ->
         if (paciente != null) {
             val listaDiagnosticos = paciente.diagnosticos
@@ -73,13 +72,13 @@ fun HistorialMedicoScreen(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(20.dp))
-                                .background(LightBlueCard)
+                                .background(FondoTarjetaDiagnostico)
                                 .padding(24.dp),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
                                 text = "Este paciente aún no tiene diagnósticos registrados.",
-                                color = TextDarkColor,
+                                color = TextoOscuro,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.Medium
                             )
@@ -96,7 +95,7 @@ fun HistorialMedicoScreen(
             ) {
                 Text(
                     text = "No se encontró información del paciente.",
-                    color = TextDarkColor,
+                    color = TextoOscuro,
                     fontSize = 15.sp
                 )
             }
@@ -109,7 +108,7 @@ fun TopBarHistorial(onVolver: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(DarkNavyBlue)
+            .background(FondoEncabezadoHistorial)
             .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -118,13 +117,13 @@ fun TopBarHistorial(onVolver: () -> Unit) {
             modifier = Modifier
                 .size(38.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(BackButtonBg)
+                .background(FondoVolverHistorial)
                 .clickable { onVolver() },
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "<",
-                color = Color.White,
+                color = FondoBlanco,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -134,7 +133,7 @@ fun TopBarHistorial(onVolver: () -> Unit) {
 
         Text(
             text = "Historial medico",
-            color = Color.White,
+            color = FondoBlanco,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
@@ -156,7 +155,7 @@ fun SeccionVistaPreviaPaciente(
             modifier = Modifier
                 .weight(1f)
                 .clip(RoundedCornerShape(22.dp))
-                .background(DarkNavyBlue)
+                .background(FondoEncabezadoHistorial)
                 .padding(horizontal = 18.dp, vertical = 14.dp)
         ) {
             Column(
@@ -164,33 +163,33 @@ fun SeccionVistaPreviaPaciente(
             ) {
                 Text(
                     text = "${paciente.nombre} ${paciente.apellidoPaterno} ${paciente.apellidoMaterno}".trim(),
-                    color = Color.White,
+                    color = FondoBlanco,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = "CI: ${paciente.ci}",
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = FondoBlanco.copy(alpha = 0.9f),
                     fontSize = 13.sp
                 )
                 Text(
                     text = "Email: ${paciente.email}",
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = FondoBlanco.copy(alpha = 0.9f),
                     fontSize = 12.sp
                 )
                 Text(
                     text = "Celular: ${paciente.celular}",
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = FondoBlanco.copy(alpha = 0.9f),
                     fontSize = 13.sp
                 )
                 Text(
                     text = "Fecha Nac.: ${paciente.fechaNacimiento}",
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = FondoBlanco.copy(alpha = 0.9f),
                     fontSize = 13.sp
                 )
                 Text(
                     text = "Consulta $totalConsultas",
-                    color = Color.White,
+                    color = FondoBlanco,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium
                 )
@@ -204,13 +203,13 @@ fun SeccionVistaPreviaPaciente(
             modifier = Modifier
                 .size(width = 86.dp, height = 110.dp)
                 .clip(CircleShape)
-                .background(Color(0xFF3E4A59)),
+                .background(FondoAvatarHistorial),
             contentAlignment = Alignment.Center
         ) {
             val iniciales = "${paciente.nombre.firstOrNull() ?: ""}${paciente.apellidoPaterno.firstOrNull() ?: ""}".uppercase()
             Text(
                 text = iniciales.ifEmpty { "P" },
-                color = Color.White,
+                color = FondoBlanco,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -234,12 +233,12 @@ fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
                 .fillMaxWidth()
                 .height(48.dp)
                 .clip(RoundedCornerShape(50))
-                .background(PillBlueGray),
+                .background(FondoTituloDiagnostico),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = diagnostico.titulo,
-                color = TextDarkColor,
+                color = TextoOscuro,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium
             )
@@ -250,7 +249,7 @@ fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(26.dp))
-                .background(LightBlueCard)
+                .background(FondoTarjetaDiagnostico)
                 .padding(horizontal = 24.dp, vertical = 22.dp)
         ) {
             Column(
@@ -258,14 +257,14 @@ fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
             ) {
                 Text(
                     text = "Fecha: ${diagnostico.fecha}",
-                    color = TextDarkColor,
+                    color = TextoOscuro,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Normal
                 )
 
                 Text(
                     text = diagnostico.descripcion,
-                    color = TextDarkColor,
+                    color = TextoOscuro,
                     fontSize = 15.sp,
                     lineHeight = 22.sp
                 )
@@ -278,7 +277,7 @@ fun ItemDiagnosticoCard(diagnostico: Diagnostico) {
                 .fillMaxWidth()
                 .padding(top = 4.dp),
             thickness = 1.5.dp,
-            color = Color(0xFF4A4A4A)
+            color = DivisorHistorial
         )
     }
 }

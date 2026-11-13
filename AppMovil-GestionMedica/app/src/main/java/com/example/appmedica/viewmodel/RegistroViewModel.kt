@@ -5,24 +5,33 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.appmedica.db.DBClass
+import com.example.appmedica.data.local.PacientesEnMemoria
 import com.example.appmedica.model.Paciente
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
 
-class RegistroViewModel : ViewModel() {
+data class RegistroPacienteFormulario(
+    val nombre: String = "",
+    val apellidoPaterno: String = "",
+    val apellidoMaterno: String = "",
+    val ci: String = "",
+    val fechaNacimiento: String = "",
+    val email: String = "",
+    val celular: String = ""
+)
 
-    var nombre by mutableStateOf("")
-    var apellidoPaterno by mutableStateOf("")
-    var apellidoMaterno by mutableStateOf("")
-    var ci by mutableStateOf("")
-    var fechaNacimiento by mutableStateOf("")
-    var email by mutableStateOf("")
-    var celular by mutableStateOf("")
+class RegistroViewModel : ViewModel() {
+    var formulario by mutableStateOf(RegistroPacienteFormulario())
+        private set
 
     var mensajeError by mutableStateOf("")
+        private set
 
-    fun onGuardar(onGuardarPaciente: (Paciente) -> Unit) {
+    fun actualizarFormulario(cambio: (RegistroPacienteFormulario) -> RegistroPacienteFormulario) {
+        formulario = cambio(formulario)
+    }
+
+    fun guardar(): Boolean = with(formulario) {
         val fecha = parsearFecha(fechaNacimiento)
         val ciLimpio = ci.trim()
         val celularLimpio = celular.trim()
@@ -39,21 +48,18 @@ class RegistroViewModel : ViewModel() {
         } else if (celularLimpio.length < 8 || celularLimpio.any { it !in '0'..'9' }) {
             mensajeError = "El celular debe tener al menos 8 dígitos, sin signos ni espacios internos."
         } else if (!Patterns.EMAIL_ADDRESS.matcher(emailLimpio).matches()) {
-            // NUEVA VALIDACIÓN: formato de email
             mensajeError = "El formato del email no es válido (ej. nombre@correo.com)."
         } else if (fecha == null) {
             mensajeError = "Formato de fecha inválido. Usa AAAA-MM-DD (ej. 2006-05-29)."
         } else if (fecha.isAfter(LocalDate.now())) {
             mensajeError = "La fecha de nacimiento no puede ser futura."
-        } else if (DBClass.existeCi(ciLimpio)) {
-            // NUEVA VALIDACIÓN: CI duplicado
+        } else if (PacientesEnMemoria.existeCi(ciLimpio)) {
             mensajeError = "Ya existe un paciente con ese CI."
-        } else if (DBClass.existeEmail(emailLimpio)) {
-            // NUEVA VALIDACIÓN: email duplicado
+        } else if (PacientesEnMemoria.existeEmail(emailLimpio)) {
             mensajeError = "Ya existe un paciente con ese email."
         } else {
             mensajeError = ""
-            onGuardarPaciente(
+            PacientesEnMemoria.agregar(
                 Paciente(
                     nombre = nombre.trim(),
                     apellidoPaterno = apellidoPaterno.trim(),
@@ -65,7 +71,9 @@ class RegistroViewModel : ViewModel() {
                     diagnosticos = emptyList()
                 )
             )
+            return@with true
         }
+        false
     }
 
     private fun parsearFecha(texto: String): LocalDate? {

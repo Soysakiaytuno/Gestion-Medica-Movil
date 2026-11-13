@@ -23,7 +23,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -34,36 +33,35 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.appmedica.viewmodel.BuscarPacienteViewModel
+import com.example.appmedica.model.Paciente
 import com.example.appmedica.model.calcularEdad
-
-private val Celeste = Color(0xFFD6F0FF)
-private val CelesteGris = Color(0xFF9BBACC)
-//private val AzulMedio = Color(0xFF568099)
-//private val AzulOscuro = Color(0xFF254E66)
-private val FondoOscuro = Color(0xFF082333)
+import com.example.appmedica.ui.theme.AzulClaro
+import com.example.appmedica.ui.theme.AzulMedio
+import com.example.appmedica.ui.theme.AzulOscuro
+import com.example.appmedica.ui.theme.AzulPildora
+import com.example.appmedica.ui.theme.AzulPrincipal
+import com.example.appmedica.ui.theme.FondoBlanco
 
 @Composable
 fun BuscarPacienteScreen(
+    query: String,
+    pacientes: List<Paciente>,
+    onQueryChange: (String) -> Unit,
     volver: () -> Unit = {},
     irAgregar: () -> Unit = {},
-    irDetalles: (String) -> Unit = {},
-    viewModel: BuscarPacienteViewModel = viewModel()
+    irDetalles: (String) -> Unit = {}
 ) {
-    val pacientes = viewModel.pacientesFiltrados()
-
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(FondoBlanco)
             .navigationBarsPadding()
             .imePadding()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(FondoOscuro)
+                .background(AzulPrincipal)
                 .statusBarsPadding()
                 .padding(horizontal = 12.dp, vertical = 16.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -76,12 +74,12 @@ fun BuscarPacienteScreen(
                     .padding(horizontal = 14.dp, vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "<", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(text = "<", color = FondoBlanco, fontSize = 20.sp, fontWeight = FontWeight.Bold)
             }
 
             Text(
                 text = "Seleccionar paciente",
-                color = Color.White,
+                color = FondoBlanco,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 16.dp)
@@ -97,7 +95,7 @@ fun BuscarPacienteScreen(
             Button(
                 onClick = irAgregar,
                 shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = CelesteGris),
+                colors = ButtonDefaults.buttonColors(containerColor = AzulPildora),
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .fillMaxWidth(0.6f)
@@ -105,7 +103,7 @@ fun BuscarPacienteScreen(
             ) {
                 Text(
                     text = "Agregar paciente",
-                    color = FondoOscuro,
+                    color = AzulPrincipal,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -113,18 +111,18 @@ fun BuscarPacienteScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             val coloresCampo = TextFieldDefaults.colors(
-                focusedContainerColor = Celeste,
-                unfocusedContainerColor = Celeste,
+                focusedContainerColor = AzulClaro,
+                unfocusedContainerColor = AzulClaro,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = FondoOscuro,
-                focusedTextColor = FondoOscuro,
-                unfocusedTextColor = FondoOscuro
+                cursorColor = AzulPrincipal,
+                focusedTextColor = AzulPrincipal,
+                unfocusedTextColor = AzulPrincipal
             )
 
             TextField(
-                value = viewModel.query,
-                onValueChange = { viewModel.onQueryChange(it) },
+                value = query,
+                onValueChange = onQueryChange,
                 placeholder = { Text(text = "Buscar por nombre", color = AzulMedio) },
                 trailingIcon = { Text(text = "\uD83D\uDD0D") },
                 singleLine = true,
@@ -137,7 +135,7 @@ fun BuscarPacienteScreen(
 
             Text(
                 text = "Pacientes",
-                color = FondoOscuro,
+                color = AzulPrincipal,
                 style = MaterialTheme.typography.titleMedium
             )
 
@@ -151,7 +149,7 @@ fun BuscarPacienteScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .border(1.dp, CelesteGris)
+                        .border(1.dp, AzulPildora)
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -159,23 +157,23 @@ fun BuscarPacienteScreen(
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = "Nombre: ${paciente.nombre} ${paciente.apellidoPaterno}",
-                            color = FondoOscuro
+                            color = AzulPrincipal
                         )
                         Text(
                             text = "Edad: ${calcularEdad(paciente.fechaNacimiento)} años",
-                            color = FondoOscuro
+                            color = AzulPrincipal
                         )
                     }
 
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(50))
-                            .background(Celeste)
+                            .background(AzulClaro)
                             .clickable { irDetalles(paciente.id) }
                             .padding(horizontal = 12.dp, vertical = 4.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(text = "Más detalles", color = FondoOscuro)
+                        Text(text = "Más detalles", color = AzulPrincipal)
                     }
                 }
 

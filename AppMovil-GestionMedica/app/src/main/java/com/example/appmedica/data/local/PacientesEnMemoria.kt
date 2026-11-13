@@ -1,11 +1,11 @@
-package com.example.appmedica.db
+package com.example.appmedica.data.local
 
 import androidx.compose.runtime.mutableStateListOf
 import com.example.appmedica.model.Diagnostico
 import com.example.appmedica.model.Paciente
 import java.time.LocalDate
 
-object DBClass {
+internal object PacientesEnMemoria {
     private val listaDePacientes = mutableStateListOf(
         Paciente(
             id = "paciente-josue-01",

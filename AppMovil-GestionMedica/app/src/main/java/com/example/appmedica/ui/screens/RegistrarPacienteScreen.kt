@@ -33,24 +33,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.appmedica.model.Paciente
-import com.example.appmedica.viewmodel.RegistroViewModel
-
-val AzulClaro = Color(0xFFD6F0FF)
-val AzulPildora = Color(0xFF9BBACC)
-val AzulMedio = Color(0xFF568099)
-val AzulOscuro = Color(0xFF254E66)
-val AzulPrincipal = Color(0xFF082333)
-val FondoBlanco = Color(0xFFFFFFFF)
-val TextoOscuro = Color(0xFF1A1A1A)
+import com.example.appmedica.ui.theme.AzulClaro
+import com.example.appmedica.ui.theme.AzulOscuro
+import com.example.appmedica.ui.theme.AzulPildora
+import com.example.appmedica.ui.theme.AzulPrincipal
+import com.example.appmedica.ui.theme.FondoBlanco
+import com.example.appmedica.ui.theme.FondoVolverRegistro
+import com.example.appmedica.ui.theme.TextoError
+import com.example.appmedica.ui.theme.TextoOscuro
+import com.example.appmedica.viewmodel.RegistroPacienteFormulario
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrarPacienteScreen(
-    onGuardarPaciente: (Paciente) -> Unit,
-    onVolver: () -> Unit,
-    viewModel: RegistroViewModel = viewModel()
+    formulario: RegistroPacienteFormulario,
+    mensajeError: String,
+    onFormularioChange: ((RegistroPacienteFormulario) -> RegistroPacienteFormulario) -> Unit,
+    onGuardar: () -> Unit,
+    onVolver: () -> Unit
 ) {
     Scaffold(
         topBar = {
@@ -67,7 +67,7 @@ fun RegistrarPacienteScreen(
                         onClick = onVolver,
                         modifier = Modifier
                             .padding(start = 8.dp)
-                            .background(Color(0xFF163445), shape = RoundedCornerShape(8.dp))
+                            .background(FondoVolverRegistro, shape = RoundedCornerShape(8.dp))
                     ) {
                         Text(
                             text = "<",
@@ -87,24 +87,10 @@ fun RegistrarPacienteScreen(
                 .padding(paddingValues)
                 .consumeWindowInsets(paddingValues)
                 .imePadding(),
-            nombre = viewModel.nombre,
-            apellidoPaterno = viewModel.apellidoPaterno,
-            apellidoMaterno = viewModel.apellidoMaterno,
-            ci = viewModel.ci,
-            fechaNacimiento = viewModel.fechaNacimiento,
-            email = viewModel.email,
-            celular = viewModel.celular,
-            mensajeError = viewModel.mensajeError,
-
-            onNombreChange = { viewModel.nombre = it },
-            onApellidoPaternoChange = { viewModel.apellidoPaterno = it },
-            onApellidoMaternoChange = { viewModel.apellidoMaterno = it },
-            onCiChange = { viewModel.ci = it },
-            onFechaNacimientoChange = { viewModel.fechaNacimiento = it },
-            onEmailChange = { viewModel.email = it },
-            onCelularChange = { viewModel.celular = it },
-
-            onGuardar = { viewModel.onGuardar(onGuardarPaciente) }
+            formulario = formulario,
+            mensajeError = mensajeError,
+            onFormularioChange = onFormularioChange,
+            onGuardar = onGuardar
         )
     }
 }
@@ -112,21 +98,9 @@ fun RegistrarPacienteScreen(
 @Composable
 fun FormularioPaciente(
     modifier: Modifier = Modifier,
-    nombre: String,
-    apellidoPaterno: String,
-    apellidoMaterno: String,
-    ci: String,
-    fechaNacimiento: String,
-    email: String,
-    celular: String,
+    formulario: RegistroPacienteFormulario,
     mensajeError: String,
-    onNombreChange: (String) -> Unit,
-    onApellidoPaternoChange: (String) -> Unit,
-    onApellidoMaternoChange: (String) -> Unit,
-    onCiChange: (String) -> Unit,
-    onFechaNacimientoChange: (String) -> Unit,
-    onEmailChange: (String) -> Unit,
-    onCelularChange: (String) -> Unit,
+    onFormularioChange: ((RegistroPacienteFormulario) -> RegistroPacienteFormulario) -> Unit,
     onGuardar: () -> Unit
 ) {
     Column(
@@ -139,13 +113,27 @@ fun FormularioPaciente(
     ) {
         Spacer(modifier = Modifier.height(24.dp))
 
-        CampoPersonalizado("Nombre:", nombre, onValorCambiado = onNombreChange)
-        CampoPersonalizado("Apellido Paterno:", apellidoPaterno, onValorCambiado = onApellidoPaternoChange)
-        CampoPersonalizado("Apellido Materno:", apellidoMaterno, onValorCambiado = onApellidoMaternoChange)
-        CampoPersonalizado("CI (7 u 8 dígitos):", ci, KeyboardType.Number, onCiChange)
-        CampoPersonalizado("Fecha Nacimiento (AAAA-MM-DD):", fechaNacimiento, onValorCambiado = onFechaNacimientoChange)
-        CampoPersonalizado("Email:", email, KeyboardType.Email, onEmailChange)
-        CampoPersonalizado("Celular (mínimo 8 dígitos):", celular, KeyboardType.Phone, onCelularChange)
+        CampoPersonalizado("Nombre:", formulario.nombre) { valor ->
+            onFormularioChange { it.copy(nombre = valor) }
+        }
+        CampoPersonalizado("Apellido Paterno:", formulario.apellidoPaterno) { valor ->
+            onFormularioChange { it.copy(apellidoPaterno = valor) }
+        }
+        CampoPersonalizado("Apellido Materno:", formulario.apellidoMaterno) { valor ->
+            onFormularioChange { it.copy(apellidoMaterno = valor) }
+        }
+        CampoPersonalizado("CI (7 u 8 dígitos):", formulario.ci, KeyboardType.Number) { valor ->
+            onFormularioChange { it.copy(ci = valor) }
+        }
+        CampoPersonalizado("Fecha Nacimiento (AAAA-MM-DD):", formulario.fechaNacimiento) { valor ->
+            onFormularioChange { it.copy(fechaNacimiento = valor) }
+        }
+        CampoPersonalizado("Email:", formulario.email, KeyboardType.Email) { valor ->
+            onFormularioChange { it.copy(email = valor) }
+        }
+        CampoPersonalizado("Celular (mínimo 8 dígitos):", formulario.celular, KeyboardType.Phone) { valor ->
+            onFormularioChange { it.copy(celular = valor) }
+        }
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -156,7 +144,7 @@ fun FormularioPaciente(
         if (mensajeError.isNotBlank()) {
             Text(
                 text = mensajeError,
-                color = Color.Red,
+                color = TextoError,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
