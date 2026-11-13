@@ -26,11 +26,13 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +44,7 @@ import com.example.appmedica.model.calcularEdad
 import com.example.appmedica.ui.theme.AvatarInicio
 import com.example.appmedica.ui.theme.AzulClaro
 import com.example.appmedica.ui.theme.AzulMedio
+import com.example.appmedica.ui.theme.AzulOscuro
 import com.example.appmedica.ui.theme.AzulPildora
 import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
@@ -61,10 +64,12 @@ fun InicioScreen(
     irAgregarPaciente: () -> Unit = {},
     irDetallesPaciente: (String) -> Unit = {},
     irAgenda: () -> Unit = {},
+    irCatalogo: () -> Unit = {},
     resumenCita: String = "No hay próximas citas."
 ) {
     LazyColumn(
         modifier = Modifier
+            .testTag("lista_inicio")
             .fillMaxSize()
             .background(FondoBlanco)
             .navigationBarsPadding()
@@ -79,6 +84,15 @@ fun InicioScreen(
                 irAgregarPaciente = irAgregarPaciente,
                 irAgenda = irAgenda
             )
+        }
+
+        item {
+            TextButton(
+                onClick = irCatalogo,
+                modifier = Modifier.padding(horizontal = 12.dp)
+            ) {
+                Text("Catálogo de medicamentos · openFDA", color = AzulOscuro)
+            }
         }
 
         // Próxima consulta

@@ -3,13 +3,17 @@ package com.example.appmedica
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
+import androidx.test.espresso.Espresso.closeSoftKeyboard
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import java.util.UUID
 import org.junit.Rule
@@ -71,12 +75,16 @@ class FlujoPacientesTest {
         compose.onNodeWithText("<").performClick()
         compose.onNodeWithText("Próxima consulta").assertIsDisplayed()
         compose.onAllNodes(hasSetTextAction())[0].performTextInput(buscar)
+        closeSoftKeyboard()
+        compose.onNodeWithTag("lista_inicio").performScrollToNode(hasText("Nombre: $buscar"))
         esperarTexto("Nombre: $buscar")
         compose.onNodeWithText("Nombre: $buscar").assertIsDisplayed()
 
         compose.activityRule.scenario.recreate()
         esperarTexto("Próxima consulta")
         compose.onAllNodes(hasSetTextAction())[0].performTextReplacement(buscar)
+        closeSoftKeyboard()
+        compose.onNodeWithTag("lista_inicio").performScrollToNode(hasText("Nombre: $buscar"))
         esperarTexto("Nombre: $buscar")
         compose.onNodeWithText("Nombre: $buscar").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Más detalles").performClick()

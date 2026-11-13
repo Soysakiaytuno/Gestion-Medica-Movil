@@ -11,12 +11,16 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.appmedica.data.remote.RetrofitClient
+import com.example.appmedica.repository.CatalogoMedicamentosRepository
 import com.example.appmedica.repository.PacienteRepository
 import com.example.appmedica.ui.screens.BuscarPacienteScreen
+import com.example.appmedica.ui.screens.CatalogoMedicamentosScreen
 import com.example.appmedica.ui.screens.HistorialMedicoScreen
 import com.example.appmedica.ui.screens.InicioScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
 import com.example.appmedica.viewmodel.BuscarPacienteViewModel
+import com.example.appmedica.viewmodel.CatalogoMedicamentosViewModel
 import com.example.appmedica.viewmodel.HistorialViewModel
 import com.example.appmedica.viewmodel.RegistroViewModel
 import com.example.appmedica.repository.CitaRepository
@@ -31,6 +35,7 @@ private const val BUSCAR_PACIENTE = "buscar_paciente"
 private const val REGISTRAR_PACIENTE = "registrar_paciente"
 private const val HISTORIAL_MEDICO = "historial_medico"
 private const val PACIENTE_ID = "pacienteId"
+private const val CATALOGO_MEDICAMENTOS = "catalogo_medicamentos"
 
 @Composable
 fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepository) {
@@ -64,8 +69,17 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 irAgregarPaciente = registrar,
                 irDetallesPaciente = abrirHistorial,
                 irAgenda = { navController.navigate("citas") { launchSingleTop = true } },
+                irCatalogo = { navController.navigate(CATALOGO_MEDICAMENTOS) { launchSingleTop = true } },
                 resumenCita = resumenProxima
             )
+        }
+
+        composable(CATALOGO_MEDICAMENTOS) {
+            val catalogo: CatalogoMedicamentosViewModel = viewModel {
+                CatalogoMedicamentosViewModel(CatalogoMedicamentosRepository(RetrofitClient.apiService))
+            }
+            val estado by catalogo.estado.collectAsStateWithLifecycle()
+            CatalogoMedicamentosScreen(estado, reintentar = catalogo::cargar, volver = volver)
         }
 
         composable("citas") {
