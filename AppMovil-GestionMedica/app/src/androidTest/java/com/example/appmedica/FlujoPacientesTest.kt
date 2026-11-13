@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -70,9 +71,9 @@ class FlujoPacientesTest {
         compose.onNodeWithText("CI: $ci").assertIsDisplayed()
         compose.onNodeWithText("Este paciente aún no tiene diagnósticos registrados.").assertIsDisplayed()
 
-        compose.onNodeWithText("<").performClick()
+        compose.onNodeWithContentDescription("Volver").performClick()
         compose.onNodeWithText("Seleccionar paciente").assertIsDisplayed()
-        compose.onNodeWithText("<").performClick()
+        compose.onNodeWithContentDescription("Volver").performClick()
         compose.onNodeWithText("Próxima consulta").assertIsDisplayed()
         compose.onAllNodes(hasSetTextAction())[0].performTextInput(buscar)
         closeSoftKeyboard()

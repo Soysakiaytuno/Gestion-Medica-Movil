@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.example.appmedica.model.*
 import com.example.appmedica.ui.theme.*
@@ -90,7 +91,15 @@ fun AgendaCitasScreen(
         FiltrosCita(estado.filtro, onFiltro)
         val visibles = if (consultaActual) datos.citas else emptyList()
         if (!cargando && datos.error.isEmpty() && visibles.isEmpty()) {
-            Text(if (estado.rol == RolDemo.PACIENTE && estado.pacienteDemoId.isEmpty()) "Selecciona un paciente para ver sus propuestas." else "No hay citas para mostrar.")
+            Text(
+                when {
+                    estado.rol == RolDemo.PACIENTE && estado.pacienteDemoId.isEmpty() ->
+                        "Selecciona un paciente para ver sus propuestas."
+                    estado.filtro != null -> "No hay citas con este estado."
+                    else -> "No hay citas para mostrar."
+                },
+                color = AzulPrincipal
+            )
         }
         visibles.forEach { cita ->
             Card(onClick = { onDetalle(cita.id) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = AzulClaro)) {
@@ -125,6 +134,7 @@ private fun FiltrosCita(seleccion: EstadoCita?, onFiltro: (EstadoCita?) -> Unit)
 @Composable
 fun FormularioCitaScreen(datos: AgendaDatos, estado: CitasEstado, onCambio: (FormularioCita) -> Unit, onGuardar: () -> Unit, onVolver: () -> Unit) {
     val f = estado.formulario
+    val focus = LocalFocusManager.current
     MarcoCitas(if (f.id == null) "Nueva cita" else "Editar cita", onVolver) {
         Text("Médico demo · propuesta pendiente", color = AzulPrincipal)
         if (estado.rol != RolDemo.MEDICO) {
@@ -135,7 +145,14 @@ fun FormularioCitaScreen(datos: AgendaDatos, estado: CitasEstado, onCambio: (For
             OutlinedTextField(value = f.hora, onValueChange = { onCambio(f.copy(hora = it)) }, label = { Text("Hora (HH:mm)") }, singleLine = true, enabled = !estado.ocupado, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = f.motivo, onValueChange = { onCambio(f.copy(motivo = it)) }, label = { Text("Motivo de la cita") }, minLines = 2, enabled = !estado.ocupado, modifier = Modifier.fillMaxWidth())
             MensajeOperacion(estado)
-            Button(onClick = onGuardar, enabled = !estado.ocupado) { Text("Guardar cita") }
+            Button(
+                onClick = {
+                    focus.clearFocus()
+                    onGuardar()
+                },
+                enabled = !estado.ocupado,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Guardar cita") }
         }
     }
 }

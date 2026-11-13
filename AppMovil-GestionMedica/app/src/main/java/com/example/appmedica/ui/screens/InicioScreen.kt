@@ -12,14 +12,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -41,7 +40,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.appmedica.model.Paciente
 import com.example.appmedica.model.calcularEdad
-import com.example.appmedica.ui.theme.AvatarInicio
 import com.example.appmedica.ui.theme.AzulClaro
 import com.example.appmedica.ui.theme.AzulMedio
 import com.example.appmedica.ui.theme.AzulOscuro
@@ -50,7 +48,6 @@ import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoBusquedaInicio
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -59,7 +56,6 @@ fun InicioScreen(
     query: String,
     pacientes: List<Paciente>,
     onQueryChange: (String) -> Unit,
-    nombreDoctor: String = "Dr. Jaldín",
     irBuscarPaciente: () -> Unit = {},
     irAgregarPaciente: () -> Unit = {},
     irDetallesPaciente: (String) -> Unit = {},
@@ -79,7 +75,6 @@ fun InicioScreen(
         // Encabezado oscuro con saludo y accesos rápidos
         item {
             EncabezadoInicio(
-                nombreDoctor = nombreDoctor,
                 irBuscarPaciente = irBuscarPaciente,
                 irAgregarPaciente = irAgregarPaciente,
                 irAgenda = irAgenda
@@ -188,6 +183,7 @@ fun InicioScreen(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(AzulClaro)
+                        .heightIn(min = 48.dp)
                         .clickable { irDetallesPaciente(paciente.id) }
                         .padding(horizontal = 12.dp, vertical = 4.dp),
                     contentAlignment = Alignment.Center
@@ -201,7 +197,6 @@ fun InicioScreen(
 
 @Composable
 private fun EncabezadoInicio(
-    nombreDoctor: String,
     irBuscarPaciente: () -> Unit,
     irAgregarPaciente: () -> Unit,
     irAgenda: () -> Unit
@@ -214,29 +209,11 @@ private fun EncabezadoInicio(
             .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 16.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = fechaDeHoy(), color = FondoBlanco, fontSize = 12.sp)
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    text = "${saludo()}, $nombreDoctor",
-                    color = FondoBlanco,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-            // Espacio para la foto de perfil del doctor
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
-                    .background(AvatarInicio)
-            )
-        }
+        Text("AppMedica", color = FondoBlanco, style = MaterialTheme.typography.headlineSmall)
+        Text("Demostración académica · Datos locales ficticios", color = FondoBlanco,
+            style = MaterialTheme.typography.bodyMedium)
+        Spacer(modifier = Modifier.height(6.dp))
+        Text(text = fechaDeHoy(), color = FondoBlanco, style = MaterialTheme.typography.bodySmall)
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -250,12 +227,6 @@ private fun EncabezadoInicio(
 
         Spacer(modifier = Modifier.height(12.dp))
         AccesoRapido("Agenda de citas · Médico / Paciente demo", Modifier.fillMaxWidth(), irAgenda)
-        Text(
-            text = "Pendiente: Receta",
-            color = FondoBlanco,
-            fontSize = 12.sp,
-            modifier = Modifier.padding(top = 12.dp)
-        )
     }
 }
 
@@ -263,32 +234,23 @@ private fun EncabezadoInicio(
 private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
         modifier = modifier
-            .height(88.dp)
+            .heightIn(min = 48.dp)
             .clip(RoundedCornerShape(20.dp))
             .background(AzulPildora)
             .clickable { onClick() }
             .padding(12.dp),
-        contentAlignment = Alignment.TopStart
+        contentAlignment = Alignment.CenterStart
     ) {
         Text(
             text = texto,
             color = AzulPrincipal,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Medium
         )
     }
 }
 
 // ---------- Utilidades de fecha y saludo ----------
-
-private fun saludo(): String {
-    val hora = LocalTime.now().hour
-    return when {
-        hora < 12 -> "Buenos días"
-        hora < 19 -> "Buenas tardes"
-        else -> "Buenas noches"
-    }
-}
 
 /** Ejemplo: "Lunes, 15 de Septiembre 2026" */
 private fun fechaDeHoy(): String {

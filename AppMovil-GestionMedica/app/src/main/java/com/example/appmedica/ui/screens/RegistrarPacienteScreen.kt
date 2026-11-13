@@ -1,7 +1,6 @@
 package com.example.appmedica.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -11,14 +10,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -29,13 +31,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.appmedica.ui.theme.AzulClaro
 import com.example.appmedica.ui.theme.AzulOscuro
-import com.example.appmedica.ui.theme.AzulPildora
 import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoVolverRegistro
@@ -70,11 +72,10 @@ fun RegistrarPacienteScreen(
                             .padding(start = 8.dp)
                             .background(FondoVolverRegistro, shape = RoundedCornerShape(8.dp))
                     ) {
-                        Text(
-                            text = "<",
-                            color = FondoBlanco,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = FondoBlanco
                         )
                     }
                 },
@@ -106,6 +107,7 @@ fun FormularioPaciente(
     onFormularioChange: ((RegistroPacienteFormulario) -> RegistroPacienteFormulario) -> Unit,
     onGuardar: () -> Unit
 ) {
+    val focus = LocalFocusManager.current
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -140,10 +142,6 @@ fun FormularioPaciente(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        Text("Agregar imagen (pendiente)", color = AzulPrincipal)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         if (mensajeError.isNotBlank()) {
             Text(
                 text = mensajeError,
@@ -154,7 +152,10 @@ fun FormularioPaciente(
         }
 
         Button(
-            onClick = onGuardar,
+            onClick = {
+                focus.clearFocus()
+                onGuardar()
+            },
             enabled = !guardando,
             colors = ButtonDefaults.buttonColors(containerColor = AzulOscuro),
             modifier = Modifier
@@ -174,34 +175,27 @@ fun CampoPersonalizado(
     tipoTeclado: KeyboardType = KeyboardType.Text,
     onValorCambiado: (String) -> Unit
 ) {
-    Column(modifier = Modifier.padding(bottom = 12.dp)) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(AzulPildora, CircleShape)
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-        ) {
-            Text(text = etiqueta, color = TextoOscuro, fontSize = 14.sp)
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
-        TextField(
-            value = valor,
-            onValueChange = onValorCambiado,
-            modifier = Modifier.fillMaxWidth(),
-            keyboardOptions = KeyboardOptions(keyboardType = tipoTeclado),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = AzulClaro,
-                unfocusedContainerColor = AzulClaro,
-                focusedTextColor = TextoOscuro,
-                unfocusedTextColor = TextoOscuro,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                cursorColor = AzulPrincipal
-            ),
-            shape = CircleShape,
-            singleLine = true
-        )
-    }
+    val focus = LocalFocusManager.current
+    val accion = if (tipoTeclado == KeyboardType.Phone) ImeAction.Done else ImeAction.Next
+    TextField(
+        value = valor,
+        onValueChange = onValorCambiado,
+        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+        label = { Text(etiqueta) },
+        keyboardOptions = KeyboardOptions(keyboardType = tipoTeclado, imeAction = accion),
+        keyboardActions = KeyboardActions(onDone = { focus.clearFocus() }),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = AzulClaro,
+            unfocusedContainerColor = AzulClaro,
+            focusedTextColor = TextoOscuro,
+            unfocusedTextColor = TextoOscuro,
+            focusedLabelColor = AzulOscuro,
+            unfocusedLabelColor = AzulPrincipal,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            cursorColor = AzulPrincipal
+        ),
+        shape = RoundedCornerShape(12.dp),
+        singleLine = true
+    )
 }
