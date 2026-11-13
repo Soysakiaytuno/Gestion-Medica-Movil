@@ -1,5 +1,6 @@
 package com.example.appmedica
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -92,6 +93,48 @@ class CitaRepositoryTest {
                 assertEquals(previo.id, repo.citas.first().single().pacienteId)
             } finally { db.close() }
         } finally { contexto.deleteDatabase(archivo) }
+    }
+
+    @Test fun conservaLaRelacionPacienteCitaYRechazaOperacionesSobreIdsInexistentes() = runBlocking {
+        val db = Room.inMemoryDatabaseBuilder(contexto, AppDatabase::class.java).build()
+        try {
+            val pacientes = PacienteRepository(db)
+            val citas = CitaRepository(db)
+            val idInexistente = "inexistente"
+            val formulario = FormularioCita(
+                pacienteId = idInexistente,
+                fecha = LocalDate.now().plusDays(2).toString(),
+                hora = "10:00",
+                motivo = "Integridad de Room"
+            )
+            assertNull(pacientes.observarPaciente(idInexistente).first())
+            assertNull(citas.observarCita(idInexistente).first())
+            falla { citas.guardar(formulario.copy(id = idInexistente), RolDemo.MEDICO) }
+            falla { citas.responder(idInexistente, "demo", EstadoCita.ACEPTADA, RolDemo.PACIENTE) }
+            falla { citas.eliminar(idInexistente, RolDemo.MEDICO) }
+
+            try {
+                citas.guardar(formulario, RolDemo.MEDICO)
+                fail("Room debía rechazar una cita con paciente inexistente")
+            } catch (_: SQLiteConstraintException) {
+                assertTrue(citas.citas.first().isEmpty())
+            }
+
+            pacientes.registrar(paciente())
+            citas.guardar(formulario.copy(pacienteId = "demo"), RolDemo.MEDICO)
+            val cita = citas.citas.first().single()
+            try {
+                pacientes.eliminar("demo")
+                fail("Room debía conservar el paciente referenciado")
+            } catch (_: SQLiteConstraintException) {
+                assertNotNull(pacientes.observarPaciente("demo").first())
+                assertEquals(cita, citas.observarCita(cita.id).first())
+            }
+            citas.eliminar(cita.id, RolDemo.MEDICO)
+            assertTrue(pacientes.eliminar("demo"))
+        } finally {
+            db.close()
+        }
     }
 
     private suspend fun falla(accion: suspend () -> Unit) {
