@@ -41,10 +41,11 @@ fun AppNavigation(repository: PacienteRepository) {
     NavHost(navController = navController, startDestination = INICIO) {
         composable(INICIO) {
             val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
-            val pacientes by busqueda.pacientes.collectAsStateWithLifecycle(initialValue = emptyList())
+            val query by busqueda.query.collectAsStateWithLifecycle()
+            val pacientes by busqueda.pacientes.collectAsStateWithLifecycle()
             InicioScreen(
-                query = busqueda.query,
-                pacientes = busqueda.pacientesFiltrados(pacientes),
+                query = query,
+                pacientes = pacientes,
                 onQueryChange = busqueda::onQueryChange,
                 irBuscarPaciente = {
                     navController.navigate(BUSCAR_PACIENTE) { launchSingleTop = true }
@@ -56,10 +57,11 @@ fun AppNavigation(repository: PacienteRepository) {
 
         composable(BUSCAR_PACIENTE) {
             val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
-            val pacientes by busqueda.pacientes.collectAsStateWithLifecycle(initialValue = emptyList())
+            val query by busqueda.query.collectAsStateWithLifecycle()
+            val pacientes by busqueda.pacientes.collectAsStateWithLifecycle()
             BuscarPacienteScreen(
-                query = busqueda.query,
-                pacientes = busqueda.pacientesFiltrados(pacientes),
+                query = query,
+                pacientes = pacientes,
                 onQueryChange = busqueda::onQueryChange,
                 volver = volver,
                 irAgregar = registrar,
@@ -69,10 +71,11 @@ fun AppNavigation(repository: PacienteRepository) {
 
         composable(REGISTRAR_PACIENTE) { entrada ->
             val registro: RegistroViewModel = viewModel { RegistroViewModel(repository) }
+            val estado by registro.estado.collectAsStateWithLifecycle()
             RegistrarPacienteScreen(
-                formulario = registro.formulario,
-                mensajeError = registro.mensajeError,
-                guardando = registro.guardando,
+                formulario = estado.formulario,
+                mensajeError = estado.mensajeError,
+                guardando = estado.guardando,
                 onFormularioChange = registro::actualizarFormulario,
                 onGuardar = {
                     registro.guardar {
@@ -90,7 +93,7 @@ fun AppNavigation(repository: PacienteRepository) {
             val historial: HistorialViewModel = viewModel {
                 HistorialViewModel(repository, entrada.arguments?.getString(PACIENTE_ID))
             }
-            val paciente by historial.paciente.collectAsStateWithLifecycle(initialValue = null)
+            val paciente by historial.paciente.collectAsStateWithLifecycle()
             HistorialMedicoScreen(paciente = paciente, onVolver = volver)
         }
     }

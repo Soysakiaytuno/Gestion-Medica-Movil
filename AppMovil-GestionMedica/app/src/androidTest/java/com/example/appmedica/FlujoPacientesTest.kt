@@ -35,6 +35,7 @@ class FlujoPacientesTest {
         esperarTexto("Nombre: Josue Balbontin")
         compose.onNodeWithText("Nombre: Josue Balbontin").assertIsDisplayed()
         compose.onAllNodes(hasSetTextAction())[0].performTextInput(buscar)
+        esperarTexto("No se encontraron pacientes")
         compose.onNodeWithText("No se encontraron pacientes").assertIsDisplayed()
         compose.onNodeWithText("Agregar paciente").performClick()
         compose.onNodeWithText("Registrar Paciente").assertIsDisplayed()
@@ -70,6 +71,7 @@ class FlujoPacientesTest {
         compose.onNodeWithText("<").performClick()
         compose.onNodeWithText("Próxima consulta").assertIsDisplayed()
         compose.onAllNodes(hasSetTextAction())[0].performTextInput(buscar)
+        esperarTexto("Nombre: $buscar")
         compose.onNodeWithText("Nombre: $buscar").assertIsDisplayed()
 
         compose.activityRule.scenario.recreate()
@@ -77,6 +79,9 @@ class FlujoPacientesTest {
         compose.onAllNodes(hasSetTextAction())[0].performTextReplacement(buscar)
         esperarTexto("Nombre: $buscar")
         compose.onNodeWithText("Nombre: $buscar").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Más detalles").performClick()
+        esperarTexto("CI: $ci")
+        compose.onNodeWithText("CI: $ci").assertIsDisplayed()
     }
 
     private fun esperarTexto(texto: String) {
