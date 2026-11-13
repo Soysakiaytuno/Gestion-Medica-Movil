@@ -59,7 +59,9 @@ fun InicioScreen(
     nombreDoctor: String = "Dr. Jaldín",
     irBuscarPaciente: () -> Unit = {},
     irAgregarPaciente: () -> Unit = {},
-    irDetallesPaciente: (String) -> Unit = {}
+    irDetallesPaciente: (String) -> Unit = {},
+    irAgenda: () -> Unit = {},
+    resumenCita: String = "No hay próximas citas."
 ) {
     LazyColumn(
         modifier = Modifier
@@ -74,7 +76,8 @@ fun InicioScreen(
             EncabezadoInicio(
                 nombreDoctor = nombreDoctor,
                 irBuscarPaciente = irBuscarPaciente,
-                irAgregarPaciente = irAgregarPaciente
+                irAgregarPaciente = irAgregarPaciente,
+                irAgenda = irAgenda
             )
         }
 
@@ -89,7 +92,7 @@ fun InicioScreen(
         }
         item {
             Text(
-                text = "La agenda de citas está pendiente.",
+                text = resumenCita,
                 color = AzulPrincipal,
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
@@ -186,7 +189,8 @@ fun InicioScreen(
 private fun EncabezadoInicio(
     nombreDoctor: String,
     irBuscarPaciente: () -> Unit,
-    irAgregarPaciente: () -> Unit
+    irAgregarPaciente: () -> Unit,
+    irAgenda: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -230,8 +234,10 @@ private fun EncabezadoInicio(
             AccesoRapido("Agregar paciente", Modifier.weight(1f), irAgregarPaciente)
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
+        AccesoRapido("Agenda de citas · Médico / Paciente demo", Modifier.fillMaxWidth(), irAgenda)
         Text(
-            text = "Pendientes: Agendar cita y Receta",
+            text = "Pendiente: Receta",
             color = FondoBlanco,
             fontSize = 12.sp,
             modifier = Modifier.padding(top = 12.dp)

@@ -8,15 +8,18 @@ import androidx.compose.material3.MaterialTheme
 import com.example.appmedica.data.local.AppDatabase
 import com.example.appmedica.navigation.AppNavigation
 import com.example.appmedica.repository.PacienteRepository
+import com.example.appmedica.repository.CitaRepository
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val pacientes = PacienteRepository(AppDatabase.obtener(applicationContext))
+        val database = AppDatabase.obtener(applicationContext)
+        val pacientes = PacienteRepository(database)
+        val citas = CitaRepository(database)
         setContent {
             MaterialTheme {
-                AppNavigation(pacientes)
+                AppNavigation(pacientes, citas)
             }
         }
     }

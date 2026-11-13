@@ -5,15 +5,31 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.example.appmedica.model.Diagnostico
 
-@Database(entities = [PacienteEntity::class], version = 1)
+@Database(entities = [PacienteEntity::class, CitaEntity::class], version = 2)
 @TypeConverters(DiagnosticosConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun pacienteDao(): PacienteDao
+    abstract fun citaDao(): CitaDao
 
     companion object {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS citas (
+                        id TEXT NOT NULL PRIMARY KEY, pacienteId TEXT NOT NULL,
+                        fecha TEXT NOT NULL, hora TEXT NOT NULL, motivo TEXT NOT NULL,
+                        estado TEXT NOT NULL,
+                        FOREIGN KEY(pacienteId) REFERENCES pacientes(id) ON UPDATE NO ACTION ON DELETE RESTRICT
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_citas_pacienteId ON citas(pacienteId)")
+            }
+        }
+
         @Volatile
         private var instancia: AppDatabase? = null
 
@@ -22,7 +38,8 @@ abstract class AppDatabase : RoomDatabase() {
                 contexto.applicationContext,
                 AppDatabase::class.java,
                 "appmedica.db"
-            ).addCallback(PacienteDemostracion)
+            ).addMigrations(MIGRATION_1_2)
+                .addCallback(PacienteDemostracion)
                 .build()
                 .also { instancia = it }
         }

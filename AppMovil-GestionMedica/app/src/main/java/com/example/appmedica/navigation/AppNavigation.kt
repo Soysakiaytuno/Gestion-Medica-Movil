@@ -18,6 +18,13 @@ import com.example.appmedica.ui.screens.RegistrarPacienteScreen
 import com.example.appmedica.viewmodel.BuscarPacienteViewModel
 import com.example.appmedica.viewmodel.HistorialViewModel
 import com.example.appmedica.viewmodel.RegistroViewModel
+import com.example.appmedica.repository.CitaRepository
+import com.example.appmedica.viewmodel.CitasViewModel
+import com.example.appmedica.ui.screens.AgendaCitasScreen
+import com.example.appmedica.ui.screens.FormularioCitaScreen
+import com.example.appmedica.ui.screens.DetalleCitaScreen
+import com.example.appmedica.model.EstadoCita
+import java.time.LocalDateTime
 
 private const val INICIO = "inicio"
 private const val BUSCAR_PACIENTE = "buscar_paciente"
@@ -26,8 +33,11 @@ private const val HISTORIAL_MEDICO = "historial_medico"
 private const val PACIENTE_ID = "pacienteId"
 
 @Composable
-fun AppNavigation(repository: PacienteRepository) {
+fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepository) {
     val navController = rememberNavController()
+    val agenda: CitasViewModel = viewModel { CitasViewModel(citasRepository, repository) }
+    val datosAgenda by agenda.datos.collectAsStateWithLifecycle()
+    val estadoAgenda by agenda.estado.collectAsStateWithLifecycle()
     val volver: () -> Unit = { navController.popBackStack() }
     val registrar: () -> Unit = {
         navController.navigate(REGISTRAR_PACIENTE) { launchSingleTop = true }
@@ -51,8 +61,40 @@ fun AppNavigation(repository: PacienteRepository) {
                     navController.navigate(BUSCAR_PACIENTE) { launchSingleTop = true }
                 },
                 irAgregarPaciente = registrar,
-                irDetallesPaciente = abrirHistorial
+                irDetallesPaciente = abrirHistorial,
+                irAgenda = { navController.navigate("citas") { launchSingleTop = true } },
+                resumenCita = if (datosAgenda.cargando) "Cargando agenda…" else if (datosAgenda.error.isNotEmpty()) datosAgenda.error else datosAgenda.citas.firstOrNull {
+                    it.estado != EstadoCita.RECHAZADA && LocalDateTime.parse("${it.fecha}T${it.hora}").isAfter(LocalDateTime.now())
+                }?.let { "${it.fecha} · ${it.hora}\n${it.motivo}\n${it.estado.etiqueta}" } ?: "No hay próximas citas."
             )
+        }
+
+        composable("citas") {
+            AgendaCitasScreen(datosAgenda, estadoAgenda, agenda::seleccionarRol, agenda::seleccionarPaciente,
+                onNueva = {
+                    agenda.prepararFormulario()
+                    navController.navigate("formulario_cita") { launchSingleTop = true }
+                },
+                onDetalle = { id ->
+                    agenda.limpiarError()
+                    navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true }
+                }, onVolver = volver)
+        }
+        composable("formulario_cita") { entrada ->
+            FormularioCitaScreen(datosAgenda, estadoAgenda, agenda::cambiarFormulario,
+                onGuardar = { agenda.guardar { if (navController.currentBackStackEntry == entrada) volver() } },
+                onVolver = volver)
+        }
+        composable("cita/{citaId}", arguments = listOf(navArgument("citaId") { type = NavType.StringType })) { entrada ->
+            val id = entrada.arguments?.getString("citaId").orEmpty()
+            DetalleCitaScreen(id, datosAgenda, estadoAgenda,
+                onEditar = { cita ->
+                    agenda.prepararFormulario(cita)
+                    navController.navigate("formulario_cita") { launchSingleTop = true }
+                },
+                onResponder = { agenda.responder(id, it) },
+                onEliminar = { agenda.eliminar(id) { if (navController.currentBackStackEntry == entrada) volver() } },
+                onVolver = volver)
         }
 
         composable(BUSCAR_PACIENTE) {
