@@ -4,10 +4,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.appmedica.data.local.PacientesEnMemoria
 import com.example.appmedica.model.Paciente
+import com.example.appmedica.repository.PacienteRepository
 
-class BuscarPacienteViewModel : ViewModel() {
+class BuscarPacienteViewModel(repository: PacienteRepository) : ViewModel() {
+    val pacientes = repository.pacientes
 
     var query by mutableStateOf("")
         private set
@@ -16,9 +17,8 @@ class BuscarPacienteViewModel : ViewModel() {
         query = nuevoTexto
     }
 
-    fun pacientesFiltrados(): List<Paciente> {
+    fun pacientesFiltrados(todos: List<Paciente>): List<Paciente> {
         val busqueda = query.trim()
-        val todos = PacientesEnMemoria.getPacientes()
         if (busqueda.isEmpty()) return todos
 
         return todos.filter {

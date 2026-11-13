@@ -2,28 +2,31 @@ package com.example.appmedica.navigation
 
 import android.net.Uri
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.appmedica.repository.PacienteRepository
 import com.example.appmedica.ui.screens.BuscarPacienteScreen
 import com.example.appmedica.ui.screens.HistorialMedicoScreen
 import com.example.appmedica.ui.screens.InicioScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
 import com.example.appmedica.viewmodel.BuscarPacienteViewModel
 import com.example.appmedica.viewmodel.HistorialViewModel
-import com.example.appmedica.viewmodel.HistorialViewModel.Companion.PACIENTE_ID
 import com.example.appmedica.viewmodel.RegistroViewModel
 
 private const val INICIO = "inicio"
 private const val BUSCAR_PACIENTE = "buscar_paciente"
 private const val REGISTRAR_PACIENTE = "registrar_paciente"
 private const val HISTORIAL_MEDICO = "historial_medico"
+private const val PACIENTE_ID = "pacienteId"
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(repository: PacienteRepository) {
     val navController = rememberNavController()
     val volver: () -> Unit = { navController.popBackStack() }
     val registrar: () -> Unit = {
@@ -37,10 +40,11 @@ fun AppNavigation() {
 
     NavHost(navController = navController, startDestination = INICIO) {
         composable(INICIO) {
-            val busqueda: BuscarPacienteViewModel = viewModel()
+            val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
+            val pacientes by busqueda.pacientes.collectAsStateWithLifecycle(initialValue = emptyList())
             InicioScreen(
                 query = busqueda.query,
-                pacientes = busqueda.pacientesFiltrados(),
+                pacientes = busqueda.pacientesFiltrados(pacientes),
                 onQueryChange = busqueda::onQueryChange,
                 irBuscarPaciente = {
                     navController.navigate(BUSCAR_PACIENTE) { launchSingleTop = true }
@@ -51,10 +55,11 @@ fun AppNavigation() {
         }
 
         composable(BUSCAR_PACIENTE) {
-            val busqueda: BuscarPacienteViewModel = viewModel()
+            val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
+            val pacientes by busqueda.pacientes.collectAsStateWithLifecycle(initialValue = emptyList())
             BuscarPacienteScreen(
                 query = busqueda.query,
-                pacientes = busqueda.pacientesFiltrados(),
+                pacientes = busqueda.pacientesFiltrados(pacientes),
                 onQueryChange = busqueda::onQueryChange,
                 volver = volver,
                 irAgregar = registrar,
@@ -62,13 +67,18 @@ fun AppNavigation() {
             )
         }
 
-        composable(REGISTRAR_PACIENTE) {
-            val registro: RegistroViewModel = viewModel()
+        composable(REGISTRAR_PACIENTE) { entrada ->
+            val registro: RegistroViewModel = viewModel { RegistroViewModel(repository) }
             RegistrarPacienteScreen(
                 formulario = registro.formulario,
                 mensajeError = registro.mensajeError,
+                guardando = registro.guardando,
                 onFormularioChange = registro::actualizarFormulario,
-                onGuardar = { if (registro.guardar()) volver() },
+                onGuardar = {
+                    registro.guardar {
+                        if (navController.currentBackStackEntry == entrada) volver()
+                    }
+                },
                 onVolver = volver
             )
         }
@@ -76,9 +86,12 @@ fun AppNavigation() {
         composable(
             route = "$HISTORIAL_MEDICO/{$PACIENTE_ID}",
             arguments = listOf(navArgument(PACIENTE_ID) { type = NavType.StringType })
-        ) {
-            val historial: HistorialViewModel = viewModel()
-            HistorialMedicoScreen(paciente = historial.paciente, onVolver = volver)
+        ) { entrada ->
+            val historial: HistorialViewModel = viewModel {
+                HistorialViewModel(repository, entrada.arguments?.getString(PACIENTE_ID))
+            }
+            val paciente by historial.paciente.collectAsStateWithLifecycle(initialValue = null)
+            HistorialMedicoScreen(paciente = paciente, onVolver = volver)
         }
     }
 }

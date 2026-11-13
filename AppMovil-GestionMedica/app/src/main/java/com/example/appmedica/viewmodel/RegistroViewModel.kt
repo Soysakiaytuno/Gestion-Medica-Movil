@@ -1,14 +1,18 @@
 package com.example.appmedica.viewmodel
 
 import android.util.Patterns
+import android.database.SQLException
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.example.appmedica.data.local.PacientesEnMemoria
+import androidx.lifecycle.viewModelScope
 import com.example.appmedica.model.Paciente
+import com.example.appmedica.repository.PacienteRepository
+import com.example.appmedica.repository.ResultadoRegistroPaciente
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
+import kotlinx.coroutines.launch
 
 data class RegistroPacienteFormulario(
     val nombre: String = "",
@@ -20,18 +24,40 @@ data class RegistroPacienteFormulario(
     val celular: String = ""
 )
 
-class RegistroViewModel : ViewModel() {
+class RegistroViewModel(private val repository: PacienteRepository) : ViewModel() {
     var formulario by mutableStateOf(RegistroPacienteFormulario())
         private set
 
     var mensajeError by mutableStateOf("")
         private set
 
+    var guardando by mutableStateOf(false)
+        private set
+
     fun actualizarFormulario(cambio: (RegistroPacienteFormulario) -> RegistroPacienteFormulario) {
         formulario = cambio(formulario)
     }
 
-    fun guardar(): Boolean = with(formulario) {
+    fun guardar(alGuardar: () -> Unit) {
+        if (guardando) return
+        val paciente = validarFormulario() ?: return
+        guardando = true
+        viewModelScope.launch {
+            try {
+                when (repository.registrar(paciente)) {
+                    ResultadoRegistroPaciente.GUARDADO -> alGuardar()
+                    ResultadoRegistroPaciente.CI_DUPLICADO -> mensajeError = "Ya existe un paciente con ese CI."
+                    ResultadoRegistroPaciente.EMAIL_DUPLICADO -> mensajeError = "Ya existe un paciente con ese email."
+                }
+            } catch (_: SQLException) {
+                mensajeError = "No se pudo guardar el paciente. Intenta nuevamente."
+            } finally {
+                guardando = false
+            }
+        }
+    }
+
+    private fun validarFormulario(): Paciente? = with(formulario) {
         val fecha = parsearFecha(fechaNacimiento)
         val ciLimpio = ci.trim()
         val celularLimpio = celular.trim()
@@ -53,27 +79,20 @@ class RegistroViewModel : ViewModel() {
             mensajeError = "Formato de fecha inválido. Usa AAAA-MM-DD (ej. 2006-05-29)."
         } else if (fecha.isAfter(LocalDate.now())) {
             mensajeError = "La fecha de nacimiento no puede ser futura."
-        } else if (PacientesEnMemoria.existeCi(ciLimpio)) {
-            mensajeError = "Ya existe un paciente con ese CI."
-        } else if (PacientesEnMemoria.existeEmail(emailLimpio)) {
-            mensajeError = "Ya existe un paciente con ese email."
         } else {
             mensajeError = ""
-            PacientesEnMemoria.agregar(
-                Paciente(
-                    nombre = nombre.trim(),
-                    apellidoPaterno = apellidoPaterno.trim(),
-                    apellidoMaterno = apellidoMaterno.trim(),
-                    ci = ciLimpio,
-                    fechaNacimiento = fecha,
-                    email = emailLimpio,
-                    celular = celularLimpio,
-                    diagnosticos = emptyList()
-                )
+            return@with Paciente(
+                nombre = nombre.trim(),
+                apellidoPaterno = apellidoPaterno.trim(),
+                apellidoMaterno = apellidoMaterno.trim(),
+                ci = ciLimpio,
+                fechaNacimiento = fecha,
+                email = emailLimpio,
+                celular = celularLimpio,
+                diagnosticos = emptyList()
             )
-            return@with true
         }
-        false
+        null
     }
 
     private fun parsearFecha(texto: String): LocalDate? {

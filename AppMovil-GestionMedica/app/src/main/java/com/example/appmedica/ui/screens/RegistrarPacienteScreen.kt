@@ -48,6 +48,7 @@ import com.example.appmedica.viewmodel.RegistroPacienteFormulario
 fun RegistrarPacienteScreen(
     formulario: RegistroPacienteFormulario,
     mensajeError: String,
+    guardando: Boolean,
     onFormularioChange: ((RegistroPacienteFormulario) -> RegistroPacienteFormulario) -> Unit,
     onGuardar: () -> Unit,
     onVolver: () -> Unit
@@ -89,6 +90,7 @@ fun RegistrarPacienteScreen(
                 .imePadding(),
             formulario = formulario,
             mensajeError = mensajeError,
+            guardando = guardando,
             onFormularioChange = onFormularioChange,
             onGuardar = onGuardar
         )
@@ -100,6 +102,7 @@ fun FormularioPaciente(
     modifier: Modifier = Modifier,
     formulario: RegistroPacienteFormulario,
     mensajeError: String,
+    guardando: Boolean,
     onFormularioChange: ((RegistroPacienteFormulario) -> RegistroPacienteFormulario) -> Unit,
     onGuardar: () -> Unit
 ) {
@@ -152,6 +155,7 @@ fun FormularioPaciente(
 
         Button(
             onClick = onGuardar,
+            enabled = !guardando,
             colors = ButtonDefaults.buttonColors(containerColor = AzulOscuro),
             modifier = Modifier
                 .fillMaxWidth()
