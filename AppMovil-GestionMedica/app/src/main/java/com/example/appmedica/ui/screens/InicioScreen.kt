@@ -148,7 +148,7 @@ fun InicioScreen(
                     .padding(horizontal = 20.dp, vertical = 6.dp)
                     .fillMaxWidth()
                     .border(1.dp, AzulPildora, RoundedCornerShape(16.dp))
-                    .padding(14.dp, vertical = 8.dp),
+                    .padding(horizontal = 14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -229,11 +229,11 @@ private fun EncabezadoInicio(
 private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
         modifier = modifier
-            .aspectRatio(1f)
+            .aspectRatio(0.90f)
             .clip(RoundedCornerShape(25.dp))
             .background(AzulPildora)
             .clickable { onClick() }
-            .padding(1.dp),
+            .padding(10.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -254,7 +254,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
         .fillMaxWidth()
         .clip(RoundedCornerShape(24.dp))
         .background(AzulClaro)
-        .padding(16.dp)
+        .padding(horizontal = 22.dp, vertical = 16.dp)
 
     val consulta = resumen.consulta
     if (consulta == null) {
@@ -308,9 +308,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
                     .padding(horizontal = 15.dp, vertical = 5.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Ver detalles", color = FondoBlanco, fontSize = 12.sp
-                //    style = MaterialTheme.typography.labelMedium
-                )
+                Text(text = "Ver detalles", color = FondoBlanco, fontSize = 12.sp)
             }
         }
     }
