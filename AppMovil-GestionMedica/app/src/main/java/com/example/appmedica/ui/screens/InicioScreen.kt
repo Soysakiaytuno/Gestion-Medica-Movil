@@ -1,5 +1,6 @@
 package com.example.appmedica.ui.screens
 
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -22,17 +22,23 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +46,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.painterResource
+import com.example.appmedica.R
 import com.example.appmedica.model.Paciente
 import com.example.appmedica.model.calcularEdad
 import com.example.appmedica.ui.theme.AzulClaro
@@ -48,6 +56,7 @@ import com.example.appmedica.ui.theme.AzulPildora
 import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoBusquedaInicio
+import com.example.appmedica.ui.theme.AvatarInicio
 import com.example.appmedica.viewmodel.ResumenProxima
 import java.time.LocalDate
 import java.time.LocalTime
@@ -114,7 +123,13 @@ fun InicioScreen(
                 value = query,
                 onValueChange = onQueryChange,
                 placeholder = { Text(text = "Buscar por nombre", color = AzulMedio) },
-                trailingIcon = { Text(text = "\uD83D\uDD0D") },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Search,
+                        contentDescription = "Buscar",
+                        tint = AzulPrincipal
+                    )
+                },
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
                 colors = TextFieldDefaults.colors(
@@ -210,23 +225,40 @@ private fun EncabezadoInicio(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+
+            Spacer(modifier = Modifier.width(12.dp))
+
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(AvatarInicio),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Person,
+                    contentDescription = "Perfil del médico",
+                    tint = AzulPrincipal,
+                    modifier = Modifier.size(35.dp)
+                )
+            }
         }
 
         Spacer(modifier = Modifier.height(55.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(30.dp)
+            horizontalArrangement = Arrangement.spacedBy(27.dp)
         ) {
-            AccesoRapido("Agenda Consultas", Modifier.weight(1f), irAgenda)
-            AccesoRapido("Recetar", Modifier.weight(1f), irRecetar)
-            AccesoRapido("Agregar paciente", Modifier.weight(1f), irAgregarPaciente)
+            AccesoRapido("Agenda Consultas", R.drawable.ic_agenda, Modifier.weight(1f), irAgenda)
+            AccesoRapido("Recetar", R.drawable.ic_recetar, Modifier.weight(1f), irRecetar)
+            AccesoRapido("Agregar paciente", R.drawable.ic_agregar_paciente, Modifier.weight(1f), irAgregarPaciente)
         }
     }
 }
 
 @Composable
-private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun AccesoRapido(texto: String, @DrawableRes icono: Int, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
         modifier = modifier
             .aspectRatio(0.90f)
@@ -237,6 +269,13 @@ private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: 
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Icon(
+            painter = painterResource(icono),
+            contentDescription = null,
+            tint = AzulPrincipal,
+            modifier = Modifier.size(52.dp)
+        )
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = texto,
             color = AzulPrincipal,
@@ -284,7 +323,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
             )
         }
 
-        Spacer(modifier = Modifier.width(35.dp))
+        Spacer(modifier = Modifier.width(32.dp))
 
         // Derecha: hora, fecha y botón
         Column(horizontalAlignment = Alignment.End) {
@@ -308,7 +347,16 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
                     .padding(horizontal = 15.dp, vertical = 5.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Ver detalles", color = FondoBlanco, fontSize = 12.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(text = "Ver detalles", color = FondoBlanco, fontSize = 12.sp)
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Outlined.ArrowForward,
+                        contentDescription = null,
+                        tint = FondoBlanco,
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
             }
         }
     }
