@@ -23,9 +23,6 @@ import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
 class FlujoPacientesTest {
-    @get:Rule
-    val compose = createAndroidComposeRule<MainActivity>()
-
     @Test
     fun registraBuscaYAbreElHistorialDelPacienteSeleccionado() {
         val sufijo = UUID.randomUUID().toString().take(8)
@@ -35,13 +32,14 @@ class FlujoPacientesTest {
         val errorCi = "El CI debe tener 7 u 8 dígitos, sin signos ni espacios internos."
         val errorCelular = "El celular debe tener al menos 8 dígitos, sin signos ni espacios internos."
 
-        compose.onNodeWithText("Buscar paciente").performClick()
-        compose.onNodeWithText("Seleccionar paciente").assertIsDisplayed()
+        // Buscar en Inicio un paciente que todavía no existe
         esperarTexto("Nombre: Josue Balbontin")
-        compose.onNodeWithText("Nombre: Josue Balbontin").assertIsDisplayed()
         compose.onAllNodes(hasSetTextAction())[0].performTextInput(buscar)
+        closeSoftKeyboard()
         esperarTexto("No se encontraron pacientes")
-        compose.onNodeWithText("No se encontraron pacientes").assertIsDisplayed()
+        compose.onNodeWithText("No se encontraron pacientes").performScrollTo().assertIsDisplayed()
+
+        // Registrarlo desde el acceso rápido de Inicio
         compose.onNodeWithText("Agregar paciente").performClick()
         compose.onNodeWithText("Registrar Paciente").assertIsDisplayed()
         val guardar = compose.onNodeWithText("Guardar Paciente")
@@ -61,10 +59,12 @@ class FlujoPacientesTest {
 
         campos[6].performScrollTo().performTextReplacement("70012345")
         guardar.performScrollTo().performClick()
-        esperarTexto("Seleccionar paciente")
+
+        // Al guardar vuelve a Inicio, y el buscador ya muestra al nuevo paciente
+        esperarTexto("Próxima consulta")
+        compose.onNodeWithTag("lista_inicio").performScrollToNode(hasText("Nombre: $buscar"))
         esperarTexto("Nombre: $buscar")
-        compose.onNodeWithText("Seleccionar paciente").assertIsDisplayed()
-        compose.onNodeWithText("Nombre: $buscar").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Nombre: $buscar").assertIsDisplayed()
         compose.onAllNodesWithText("Más detalles").assertCountEquals(1)
         compose.onNodeWithText("Más detalles").performClick()
         esperarTexto("CI: $ci")
@@ -72,15 +72,9 @@ class FlujoPacientesTest {
         compose.onNodeWithText("Este paciente aún no tiene diagnósticos registrados.").assertIsDisplayed()
 
         compose.onNodeWithContentDescription("Volver").performClick()
-        compose.onNodeWithText("Seleccionar paciente").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Volver").performClick()
         compose.onNodeWithText("Próxima consulta").assertIsDisplayed()
-        compose.onAllNodes(hasSetTextAction())[0].performTextInput(buscar)
-        closeSoftKeyboard()
-        compose.onNodeWithTag("lista_inicio").performScrollToNode(hasText("Nombre: $buscar"))
-        esperarTexto("Nombre: $buscar")
-        compose.onNodeWithText("Nombre: $buscar").assertIsDisplayed()
 
+        // Tras recrear la actividad, la búsqueda en Inicio sigue funcionando
         compose.activityRule.scenario.recreate()
         esperarTexto("Próxima consulta")
         compose.onAllNodes(hasSetTextAction())[0].performTextReplacement(buscar)
@@ -92,6 +86,9 @@ class FlujoPacientesTest {
         esperarTexto("CI: $ci")
         compose.onNodeWithText("CI: $ci").assertIsDisplayed()
     }
+
+    @get:Rule
+    val compose = createAndroidComposeRule<MainActivity>()
 
     private fun esperarTexto(texto: String) {
         compose.waitUntil(timeoutMillis = 10_000) {

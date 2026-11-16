@@ -63,9 +63,6 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 query = query,
                 pacientes = pacientes,
                 onQueryChange = busqueda::onQueryChange,
-                irBuscarPaciente = {
-                    navController.navigate(BUSCAR_PACIENTE) { launchSingleTop = true }
-                },
                 irAgregarPaciente = registrar,
                 irDetallesPaciente = abrirHistorial,
                 irAgenda = { navController.navigate("citas") { launchSingleTop = true } },

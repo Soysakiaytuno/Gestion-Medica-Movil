@@ -20,12 +20,9 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -35,6 +32,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -42,12 +40,12 @@ import com.example.appmedica.model.Paciente
 import com.example.appmedica.model.calcularEdad
 import com.example.appmedica.ui.theme.AzulClaro
 import com.example.appmedica.ui.theme.AzulMedio
-import com.example.appmedica.ui.theme.AzulOscuro
 import com.example.appmedica.ui.theme.AzulPildora
 import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoBusquedaInicio
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.TextStyle
 import java.util.Locale
 
@@ -56,7 +54,6 @@ fun InicioScreen(
     query: String,
     pacientes: List<Paciente>,
     onQueryChange: (String) -> Unit,
-    irBuscarPaciente: () -> Unit = {},
     irAgregarPaciente: () -> Unit = {},
     irDetallesPaciente: (String) -> Unit = {},
     irAgenda: () -> Unit = {},
@@ -75,20 +72,20 @@ fun InicioScreen(
         // Encabezado oscuro con saludo y accesos rápidos
         item {
             EncabezadoInicio(
-                irBuscarPaciente = irBuscarPaciente,
-                irAgregarPaciente = irAgregarPaciente,
-                irAgenda = irAgenda
+                irAgenda = irAgenda,
+                irRecetar = irCatalogo,
+                irAgregarPaciente = irAgregarPaciente
             )
         }
 
-        item {
-            TextButton(
-                onClick = irCatalogo,
-                modifier = Modifier.padding(horizontal = 12.dp)
-            ) {
-                Text("Catálogo de medicamentos · openFDA", color = AzulOscuro)
-            }
-        }
+        // item {
+        //     TextButton(
+        //         onClick = irCatalogo,
+        //         modifier = Modifier.padding(horizontal = 12.dp)
+        //     ) {
+        //         Text("Catálogo de medicamentos · openFDA", color = AzulOscuro)
+        //     }
+        // }
 
         // Próxima consulta
         item {
@@ -197,55 +194,65 @@ fun InicioScreen(
 
 @Composable
 private fun EncabezadoInicio(
-    irBuscarPaciente: () -> Unit,
+    irAgenda: () -> Unit,
+    irRecetar: () -> Unit,
     irAgregarPaciente: () -> Unit,
-    irAgenda: () -> Unit
-) {
+    ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
             .background(AzulPrincipal)
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 16.dp)
+            .padding(horizontal = 16.dp, vertical = 24.dp)
     ) {
-        Text("AppMedica", color = FondoBlanco, style = MaterialTheme.typography.headlineSmall)
-        Text("Demostración académica · Datos locales ficticios", color = FondoBlanco,
-            style = MaterialTheme.typography.bodyMedium)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(text = fechaDeHoy(), color = FondoBlanco, style = MaterialTheme.typography.bodySmall)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = fechaDeHoy(), color = FondoBlanco, style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "${saludoSegunHora()}, Dr. Jaldin",
+                    color = FondoBlanco,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.height(20.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            AccesoRapido("Buscar paciente", Modifier.weight(1f), irBuscarPaciente)
+            AccesoRapido("Agenda Consultas", Modifier.weight(1f), irAgenda)
+            AccesoRapido("Recetar", Modifier.weight(1f), irRecetar)
             AccesoRapido("Agregar paciente", Modifier.weight(1f), irAgregarPaciente)
         }
-
-        Spacer(modifier = Modifier.height(12.dp))
-        AccesoRapido("Agenda de citas · Médico / Paciente demo", Modifier.fillMaxWidth(), irAgenda)
     }
 }
 
 @Composable
 private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    Box(
+    Column(
         modifier = modifier
-            .heightIn(min = 48.dp)
+            .aspectRatio(1f)
             .clip(RoundedCornerShape(20.dp))
             .background(AzulPildora)
             .clickable { onClick() }
-            .padding(12.dp),
-        contentAlignment = Alignment.CenterStart
+            .padding(10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
     ) {
         Text(
             text = texto,
             color = AzulPrincipal,
             style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
         )
     }
 }
@@ -261,6 +268,12 @@ private fun fechaDeHoy(): String {
     val mes = hoy.month.getDisplayName(TextStyle.FULL, es)
         .replaceFirstChar { it.uppercase() }
     return "$dia, ${hoy.dayOfMonth} de $mes ${hoy.year}"
+}
+/** "Buen día" (5–11 h), "Buenas tardes" (12–18 h) o "Buenas noches" */
+private fun saludoSegunHora(): String = when (LocalTime.now().hour) {
+    in 5..11 -> "Buen día"
+    in 12..18 -> "Buenas tardes"
+    else -> "Buenas noches"
 }
 
 @Preview(showBackground = true, showSystemUi = true)
