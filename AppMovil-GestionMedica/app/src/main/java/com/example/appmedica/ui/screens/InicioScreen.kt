@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -207,7 +208,7 @@ private fun EncabezadoInicio(
             .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
             .background(AzulPrincipal)
             .statusBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .padding(horizontal = 31.dp, vertical = 24.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -244,12 +245,9 @@ private fun EncabezadoInicio(
             }
         }
 
-        Spacer(modifier = Modifier.height(55.dp))
+        Spacer(modifier = Modifier.height(40.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(27.dp)
-        ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
             AccesoRapido("Agenda Consultas", R.drawable.ic_agenda, Modifier.weight(1f), irAgenda)
             AccesoRapido("Recetar", R.drawable.ic_recetar, Modifier.weight(1f), irRecetar)
             AccesoRapido("Agregar paciente", R.drawable.ic_agregar_paciente, Modifier.weight(1f), irAgregarPaciente)
@@ -258,30 +256,42 @@ private fun EncabezadoInicio(
 }
 
 @Composable
-private fun AccesoRapido(texto: String, @DrawableRes icono: Int, modifier: Modifier = Modifier, onClick: () -> Unit) {
+private fun AccesoRapido(
+    texto: String,
+    @DrawableRes icono: Int,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
     Column(
         modifier = modifier
-            .aspectRatio(0.90f)
-            .clip(RoundedCornerShape(25.dp))
-            .background(AzulPildora)
+            .clip(RoundedCornerShape(16.dp))
             .clickable { onClick() }
-            .padding(10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            painter = painterResource(icono),
-            contentDescription = null,
-            tint = AzulPrincipal,
-            modifier = Modifier.size(52.dp)
-        )
+        // Cuadrado redondeado solo con el ícono
+        Box(
+            modifier = Modifier
+                .size(75.dp)
+                .clip(RoundedCornerShape(22.dp))
+                .background(AzulPildora),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(icono),
+                contentDescription = null,
+                tint = AzulPrincipal,
+                modifier = Modifier.size(45.dp)
+            )
+        }
         Spacer(modifier = Modifier.height(6.dp))
+        // Texto blanco debajo; el ancho máximo hace que "Agenda Consultas" y "Agregar paciente" vayan en 2 líneas
         Text(
             text = texto,
-            color = AzulPrincipal,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Medium,
-            textAlign = TextAlign.Center
+            color = FondoBlanco,
+            style = MaterialTheme.typography.bodySmall,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 84.dp)
         )
     }
 }
