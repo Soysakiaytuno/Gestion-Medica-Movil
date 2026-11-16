@@ -23,7 +23,7 @@ class FlujoCitasTest {
 
     @Test fun medicoCreaEditaPacienteRespondeYMedicoElimina() {
         val motivo = "Control demo ${UUID.randomUUID().toString().take(8)}"
-        compose.onNodeWithText("Agenda de citas · Médico / Paciente demo").performScrollTo().performClick()
+        compose.onNodeWithText("Agenda Consultas").performScrollTo().performClick()
         esperar("Crear cita")
         compose.waitUntil(10_000) { compose.onAllNodes(hasText("Crear cita") and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("Crear cita").performClick()
@@ -67,7 +67,7 @@ class FlujoCitasTest {
         compose.onNodeWithText("Estado: Aceptada").assertIsDisplayed()
         compose.onNodeWithText("Eliminar cita").performScrollTo().performClick()
         compose.onNodeWithText("Eliminar").performClick()
-        esperar("Agenda de citas")
+        esperar("Agenda Consultas")
         compose.onNodeWithText("$motivo editado").assertDoesNotExist()
     }
 
@@ -98,7 +98,7 @@ class FlujoCitasTest {
                 repo.responder(citas.single { it.motivo == rechazada }.id, pacienteId, EstadoCita.RECHAZADA, RolDemo.PACIENTE)
             }
 
-            compose.onNodeWithText("Agenda de citas · Médico / Paciente demo").performScrollTo().performClick()
+            compose.onNodeWithText("Agenda Consultas").performScrollTo().performClick()
             esperar(pendiente)
             compose.onNodeWithText(aceptada).assertExists()
             compose.onNodeWithText(rechazada).assertExists()
