@@ -67,6 +67,10 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 irDetallesPaciente = abrirHistorial,
                 irAgenda = { navController.navigate("citas") { launchSingleTop = true } },
                 irCatalogo = { navController.navigate(CATALOGO_MEDICAMENTOS) { launchSingleTop = true } },
+                irDetalleCita = { id ->
+                    agenda.limpiarError()
+                    navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true}
+                },
                 resumenCita = resumenProxima
             )
         }

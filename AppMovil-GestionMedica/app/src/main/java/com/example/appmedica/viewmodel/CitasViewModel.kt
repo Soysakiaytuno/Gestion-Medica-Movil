@@ -53,6 +53,20 @@ data class DetalleCitaDatos(
     val error: String = ""
 )
 
+data class ProximaConsulta(
+    val citaId: String,
+    val paciente: String,
+    val motivo: String,
+    val fecha: String,
+    val hora: String
+)
+
+/** Si no hay cita, consulta es null y se muestra el mensaje. */
+data class ResumenProxima(
+    val consulta: ProximaConsulta? = null,
+    val mensaje: String = "Cargando agenda…"
+)
+
 class CitasViewModel(
     private val repository: CitaRepository,
     pacientes: PacienteRepository
@@ -76,13 +90,25 @@ class CitasViewModel(
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AgendaDatos())
 
-    val resumenProxima = repository.observarProxima().map { cita ->
-        cita?.let { "${it.fecha} · ${it.hora}\n${it.motivo}\n${it.estado.etiqueta}" }
-            ?: "No hay próximas citas."
+    val resumenProxima = combine(repository.observarProxima(), pacientes.pacientes) { cita, lista ->
+        if (cita == null) {
+            ResumenProxima(mensaje = "No hay próximas citas.")
+        } else {
+            val paciente = lista.firstOrNull { it.id == cita.pacienteId }
+            ResumenProxima(
+                ProximaConsulta(
+                    citaId = cita.id,
+                    paciente = paciente?.let { "${it.nombre} ${it.apellidoPaterno}" } ?: "Paciente",
+                    motivo = cita.motivo,
+                    fecha = cita.fecha,
+                    hora = cita.hora
+                )
+            )
+        }
     }.catch { error ->
         if (error is CancellationException) throw error
-        emit("No se pudo cargar la próxima cita.")
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "Cargando agenda…")
+        emit(ResumenProxima(mensaje = "No se pudo cargar la próxima cita."))
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ResumenProxima())
 
     fun seleccionarFiltro(filtro: EstadoCita?) {
         mutableEstado.update { it.copy(filtro = filtro) }

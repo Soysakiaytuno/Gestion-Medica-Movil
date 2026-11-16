@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -33,6 +34,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -44,9 +46,12 @@ import com.example.appmedica.ui.theme.AzulPildora
 import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoBusquedaInicio
+import com.example.appmedica.viewmodel.ProximaConsulta
+import com.example.appmedica.viewmodel.ResumenProxima
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.TextStyle
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Composable
@@ -58,7 +63,8 @@ fun InicioScreen(
     irDetallesPaciente: (String) -> Unit = {},
     irAgenda: () -> Unit = {},
     irCatalogo: () -> Unit = {},
-    resumenCita: String = "No hay próximas citas."
+    irDetalleCita: (String) -> Unit = {},
+    resumenCita: ResumenProxima = ResumenProxima(mensaje = "No hay próximas citas.")
 ) {
     LazyColumn(
         modifier = Modifier
@@ -84,20 +90,11 @@ fun InicioScreen(
                 text = "Próxima consulta",
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 10.dp)
+                modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 5.dp)
             )
         }
         item {
-            Text(
-                text = resumenCita,
-                color = AzulPrincipal,
-                modifier = Modifier
-                    .padding(horizontal = 20.dp)
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(AzulClaro)
-                    .padding(16.dp)
-            )
+            CardProximaConsulta(resumen = resumenCita, irDetalleCita = irDetalleCita)
         }
 
         // Buscador
@@ -248,7 +245,86 @@ private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: 
     }
 }
 
+@Composable
+private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String) -> Unit) {
+    val modificadorCard = Modifier
+        .padding(horizontal = 20.dp)
+        .fillMaxWidth()
+        .clip(RoundedCornerShape(24.dp))
+        .background(AzulClaro)
+        .padding(16.dp)
+
+    val consulta = resumen.consulta
+    if (consulta == null) {
+        Text(text = resumen.mensaje, color = AzulPrincipal, modifier = modificadorCard)
+        return
+    }
+
+    Row(modifier = modificadorCard) {
+        // Izquierda: paciente y motivo
+        Column(modifier = Modifier.weight(1f)) {
+            Spacer(modifier = Modifier.height(15.dp))
+            Text(
+                text = consulta.paciente,
+                color = AzulPrincipal,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = consulta.motivo,
+                color = AzulPrincipal,
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        Spacer(modifier = Modifier.width(25.dp))
+
+        // Derecha: hora, fecha y botón
+        Column(horizontalAlignment = Alignment.End) {
+            Text(
+                text = horaCorta(consulta.hora),
+                color = AzulPrincipal,
+                fontSize = 36.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = fechaCorta(consulta.fecha),
+                color = AzulPrincipal,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Box(
+                modifier = Modifier
+                    .heightIn(min = 40.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(AzulPrincipal)
+                    .clickable { irDetalleCita(consulta.citaId) }
+                    .padding(horizontal = 14.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(text = "Ver detalles", color = FondoBlanco, style = MaterialTheme.typography.labelMedium)
+            }
+        }
+    }
+}
+
 // ---------- Utilidades de fecha y saludo ----------
+/** "08:30" → "8:30" */
+private fun horaCorta(hora: String): String = runCatching {
+    LocalTime.parse(hora).format(DateTimeFormatter.ofPattern("H:mm"))
+}.getOrDefault(hora)
+
+/** "2026-12-24" → "24 dic 2026" */
+private fun fechaCorta(fecha: String): String = runCatching {
+    LocalDate.parse(fecha)
+        .format(DateTimeFormatter.ofPattern("d MMM yyyy", Locale.forLanguageTag("es")))
+        .replace(".", "")
+}.getOrDefault(fecha)
 
 /** Ejemplo: "Lunes, 15 de Septiembre 2026" */
 private fun fechaDeHoy(): String {
