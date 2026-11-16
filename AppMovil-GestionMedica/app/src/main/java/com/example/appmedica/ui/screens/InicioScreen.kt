@@ -26,11 +26,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -46,7 +48,6 @@ import com.example.appmedica.ui.theme.AzulPildora
 import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoBusquedaInicio
-import com.example.appmedica.viewmodel.ProximaConsulta
 import com.example.appmedica.viewmodel.ResumenProxima
 import java.time.LocalDate
 import java.time.LocalTime
@@ -97,6 +98,16 @@ fun InicioScreen(
             CardProximaConsulta(resumen = resumenCita, irDetalleCita = irDetalleCita)
         }
 
+        // Lista de pacientes
+        item {
+            Text(
+                text = "Pacientes",
+                color = AzulPrincipal,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 20.dp, top = 24.dp, bottom = 10.dp)
+            )
+        }
+
         // Buscador
         item {
             TextField(
@@ -117,17 +128,7 @@ fun InicioScreen(
                 ),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 20.dp)
-            )
-        }
-
-        // Lista de pacientes
-        item {
-            Text(
-                text = "Pacientes",
-                color = AzulPrincipal,
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 10.dp)
+                    .padding(start = 20.dp, end = 20.dp, bottom = 12.dp)
             )
         }
 
@@ -146,8 +147,8 @@ fun InicioScreen(
                 modifier = Modifier
                     .padding(horizontal = 20.dp, vertical = 6.dp)
                     .fillMaxWidth()
-                    .border(1.dp, AzulPildora)
-                    .padding(12.dp),
+                    .border(1.dp, AzulPildora, RoundedCornerShape(16.dp))
+                    .padding(14.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -165,12 +166,11 @@ fun InicioScreen(
                 }
 
                 Box(
-                    modifier = Modifier
+                    modifier = Modifier.minimumInteractiveComponentSize()
                         .clip(RoundedCornerShape(50))
                         .background(AzulClaro)
-                        .heightIn(min = 48.dp)
                         .clickable { irDetallesPaciente(paciente.id) }
-                        .padding(horizontal = 12.dp, vertical = 4.dp),
+                        .padding(horizontal = 15.dp, vertical = 5.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(text = "Más detalles", color = AzulPrincipal, fontSize = 12.sp)
@@ -192,7 +192,7 @@ private fun EncabezadoInicio(
             .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
             .background(AzulPrincipal)
             .statusBarsPadding()
-            .padding(horizontal = 16.dp, vertical = 24.dp)
+            .padding(horizontal = 24.dp, vertical = 24.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -205,16 +205,18 @@ private fun EncabezadoInicio(
                     text = "${saludoSegunHora()}, Dr. Jaldin",
                     color = FondoBlanco,
                     style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(55.dp))
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
+            horizontalArrangement = Arrangement.spacedBy(30.dp)
         ) {
             AccesoRapido("Agenda Consultas", Modifier.weight(1f), irAgenda)
             AccesoRapido("Recetar", Modifier.weight(1f), irRecetar)
@@ -228,10 +230,10 @@ private fun AccesoRapido(texto: String, modifier: Modifier = Modifier, onClick: 
     Column(
         modifier = modifier
             .aspectRatio(1f)
-            .clip(RoundedCornerShape(20.dp))
+            .clip(RoundedCornerShape(25.dp))
             .background(AzulPildora)
             .clickable { onClick() }
-            .padding(10.dp),
+            .padding(1.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -282,7 +284,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
             )
         }
 
-        Spacer(modifier = Modifier.width(25.dp))
+        Spacer(modifier = Modifier.width(35.dp))
 
         // Derecha: hora, fecha y botón
         Column(horizontalAlignment = Alignment.End) {
@@ -299,15 +301,16 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
             )
             Spacer(modifier = Modifier.height(12.dp))
             Box(
-                modifier = Modifier
-                    .heightIn(min = 40.dp)
+                modifier = Modifier.minimumInteractiveComponentSize()
                     .clip(RoundedCornerShape(50))
                     .background(AzulPrincipal)
                     .clickable { irDetalleCita(consulta.citaId) }
-                    .padding(horizontal = 14.dp),
+                    .padding(horizontal = 15.dp, vertical = 5.dp),
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "Ver detalles", color = FondoBlanco, style = MaterialTheme.typography.labelMedium)
+                Text(text = "Ver detalles", color = FondoBlanco, fontSize = 12.sp
+                //    style = MaterialTheme.typography.labelMedium
+                )
             }
         }
     }
@@ -336,6 +339,7 @@ private fun fechaDeHoy(): String {
         .replaceFirstChar { it.uppercase() }
     return "$dia, ${hoy.dayOfMonth} de $mes ${hoy.year}"
 }
+
 /** "Buen día" (5–11 h), "Buenas tardes" (12–18 h) o "Buenas noches" */
 private fun saludoSegunHora(): String = when (LocalTime.now().hour) {
     in 5..11 -> "Buen día"
