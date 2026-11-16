@@ -98,7 +98,7 @@ class CitasViewModel(
             ResumenProxima(
                 ProximaConsulta(
                     citaId = cita.id,
-                    paciente = paciente?.let { "${it.nombre} ${it.apellidoPaterno}" } ?: "Paciente",
+                    paciente = paciente?.let { "${it.apellidoPaterno} ${it.nombre}" } ?: "Paciente",
                     motivo = cita.motivo,
                     fecha = cita.fecha,
                     hora = cita.hora

@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -101,6 +100,7 @@ fun InicioScreen(
                 text = "Próxima consulta",
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 5.dp)
             )
         }
@@ -114,6 +114,7 @@ fun InicioScreen(
                 text = "Pacientes",
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(start = 20.dp, top = 24.dp, bottom = 10.dp)
             )
         }
@@ -208,7 +209,7 @@ private fun EncabezadoInicio(
             .clip(RoundedCornerShape(bottomStart = 20.dp, bottomEnd = 20.dp))
             .background(AzulPrincipal)
             .statusBarsPadding()
-            .padding(horizontal = 31.dp, vertical = 24.dp)
+            .padding(horizontal = 27.dp, vertical = 27.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -226,8 +227,6 @@ private fun EncabezadoInicio(
                     overflow = TextOverflow.Ellipsis
                 )
             }
-
-            Spacer(modifier = Modifier.width(12.dp))
 
             Box(
                 modifier = Modifier
@@ -333,7 +332,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
             )
         }
 
-        Spacer(modifier = Modifier.width(32.dp))
+        Spacer(modifier = Modifier.width(30.dp))
 
         // Derecha: hora, fecha y botón
         Column(horizontalAlignment = Alignment.End) {
