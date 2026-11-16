@@ -53,7 +53,7 @@ data class DetalleCitaDatos(
     val error: String = ""
 )
 
-data class ProximaConsulta(
+data class ProximaCita(
     val citaId: String,
     val paciente: String,
     val motivo: String,
@@ -63,7 +63,7 @@ data class ProximaConsulta(
 
 /** Si no hay cita, consulta es null y se muestra el mensaje. */
 data class ResumenProxima(
-    val consulta: ProximaConsulta? = null,
+    val cita: ProximaCita? = null,
     val mensaje: String = "Cargando agenda…"
 )
 
@@ -96,7 +96,7 @@ class CitasViewModel(
         } else {
             val paciente = lista.firstOrNull { it.id == cita.pacienteId }
             ResumenProxima(
-                ProximaConsulta(
+                ProximaCita(
                     citaId = cita.id,
                     paciente = paciente?.let { "${it.apellidoPaterno} ${it.nombre}" } ?: "Paciente",
                     motivo = cita.motivo,

@@ -94,10 +94,10 @@ fun InicioScreen(
             )
         }
         
-        // Próxima consulta
+        // Próxima cita
         item {
             Text(
-                text = "Próxima consulta",
+                text = "Próxima cita",
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -105,7 +105,7 @@ fun InicioScreen(
             )
         }
         item {
-            CardProximaConsulta(resumen = resumenCita, irDetalleCita = irDetalleCita)
+            CardProximaCita(resumen = resumenCita, irDetalleCita = irDetalleCita)
         }
 
         // Lista de pacientes
@@ -247,7 +247,7 @@ private fun EncabezadoInicio(
         Spacer(modifier = Modifier.height(40.dp))
 
         Row(modifier = Modifier.fillMaxWidth()) {
-            AccesoRapido("Agenda Consultas", R.drawable.ic_agenda, Modifier.weight(1f), irAgenda)
+            AccesoRapido("Agenda de Citas", R.drawable.ic_agenda, Modifier.weight(1f), irAgenda)
             AccesoRapido("Recetar", R.drawable.ic_recetar, Modifier.weight(1f), irRecetar)
             AccesoRapido("Agregar paciente", R.drawable.ic_agregar_paciente, Modifier.weight(1f), irAgregarPaciente)
         }
@@ -284,7 +284,7 @@ private fun AccesoRapido(
             )
         }
         Spacer(modifier = Modifier.height(6.dp))
-        // Texto blanco debajo; el ancho máximo hace que "Agenda Consultas" y "Agregar paciente" vayan en 2 líneas
+        // Texto blanco debajo; el ancho máximo hace que "Agenda de Citas" y "Agregar paciente" vayan en 2 líneas
         Text(
             text = texto,
             color = FondoBlanco,
@@ -296,7 +296,7 @@ private fun AccesoRapido(
 }
 
 @Composable
-private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String) -> Unit) {
+private fun CardProximaCita(resumen: ResumenProxima, irDetalleCita: (String) -> Unit) {
     val modificadorCard = Modifier
         .padding(horizontal = 20.dp)
         .fillMaxWidth()
@@ -304,8 +304,8 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
         .background(AzulClaro)
         .padding(horizontal = 22.dp, vertical = 16.dp)
 
-    val consulta = resumen.consulta
-    if (consulta == null) {
+    val cita = resumen.cita
+    if (cita == null) {
         Text(text = resumen.mensaje, color = AzulPrincipal, modifier = modificadorCard)
         return
     }
@@ -315,7 +315,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
         Column(modifier = Modifier.weight(1f)) {
             Spacer(modifier = Modifier.height(15.dp))
             Text(
-                text = consulta.paciente,
+                text = cita.paciente,
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
@@ -324,7 +324,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = consulta.motivo,
+                text = cita.motivo,
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 2,
@@ -337,13 +337,13 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
         // Derecha: hora, fecha y botón
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = horaCorta(consulta.hora),
+                text = horaCorta(cita.hora),
                 color = AzulPrincipal,
                 fontSize = 36.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = fechaCorta(consulta.fecha),
+                text = fechaCorta(cita.fecha),
                 color = AzulPrincipal,
                 style = MaterialTheme.typography.bodyMedium
             )
@@ -352,7 +352,7 @@ private fun CardProximaConsulta(resumen: ResumenProxima, irDetalleCita: (String)
                 modifier = Modifier.minimumInteractiveComponentSize()
                     .clip(RoundedCornerShape(50))
                     .background(AzulPrincipal)
-                    .clickable { irDetalleCita(consulta.citaId) }
+                    .clickable { irDetalleCita(cita.citaId) }
                     .padding(horizontal = 15.dp, vertical = 5.dp),
                 contentAlignment = Alignment.Center
             ) {
