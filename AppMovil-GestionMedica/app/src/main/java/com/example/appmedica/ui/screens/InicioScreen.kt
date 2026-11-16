@@ -77,16 +77,7 @@ fun InicioScreen(
                 irAgregarPaciente = irAgregarPaciente
             )
         }
-
-        // item {
-        //     TextButton(
-        //         onClick = irCatalogo,
-        //         modifier = Modifier.padding(horizontal = 12.dp)
-        //     ) {
-        //         Text("Catálogo de medicamentos · openFDA", color = AzulOscuro)
-        //     }
-        // }
-
+        
         // Próxima consulta
         item {
             Text(
