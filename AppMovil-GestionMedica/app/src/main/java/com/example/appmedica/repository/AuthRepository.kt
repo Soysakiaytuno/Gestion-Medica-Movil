@@ -1,14 +1,13 @@
 
 package com.example.appmedica.repository
 
+import com.example.appmedica.model.IdTokenInfo
 import com.example.appmedica.model.PerfilUsuario
 import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.model.SesionUsuario
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-import com.example.appmedica.model.IdTokenInfo
-
 
 class AuthRepository(
     private val auth: FirebaseAuth = FirebaseAuth.getInstance(),
@@ -74,7 +73,7 @@ class AuthRepository(
                 "El paciente no tiene un identificador asociado"
             }
 
-            // 4. Construir el perfil de nuestra aplicación
+            // 4. Construir el perfil
             val perfil = PerfilUsuario(
                 uid = usuario.uid,
                 nombre = nombre,
@@ -97,7 +96,12 @@ class AuthRepository(
         }
     }
 
+    // 6. Cerrar la sesión del usuario en Firebase
+    fun cerrarSesion() {
+        auth.signOut()
+    }
 
+    // 7. Consultar los metadatos del JWT
     suspend fun obtenerInfoToken(): IdTokenInfo {
         val usuario = auth.currentUser
             ?: error("No hay una sesión iniciada")
@@ -109,5 +113,4 @@ class AuthRepository(
             expiraEnSegundos = resultadoToken.expirationTimestamp
         )
     }
-
 }
