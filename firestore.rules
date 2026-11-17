@@ -1,0 +1,21 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+    match /databases/{database}/documents {
+
+        // Cada usuario puede leer únicamente su propio perfil
+        match /perfiles/{uid} {
+            allow read: if request.auth != null
+                        && request.auth.uid == uid;
+
+            // Los perfiles se administran desde Firebase Console
+            allow write: if false;
+        }
+
+        // Denegar acceso al resto de documentos
+        match /{document=**} {
+            allow read, write: if false;
+        }
+    }
+}
