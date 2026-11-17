@@ -15,7 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.ui.text.font.FontWeight
 import com.example.appmedica.model.*
+import com.example.appmedica.ui.components.BotonVolver
 import com.example.appmedica.ui.theme.*
 import com.example.appmedica.viewmodel.AgendaDatos
 import com.example.appmedica.viewmodel.CitasEstado
@@ -33,8 +35,8 @@ private fun MarcoCitas(titulo: String, volver: () -> Unit, contenido: @Composabl
     )) {
         Scaffold(
             topBar = { TopAppBar(
-                title = { Text(titulo) },
-                navigationIcon = { TextButton(onClick = volver) { Text("Volver", color = FondoBlanco) } },
+                title = { Text(titulo, fontWeight = FontWeight.Bold) },
+                navigationIcon = { BotonVolver(onClick = volver, modifier = Modifier.padding(start = 8.dp)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = AzulPrincipal, titleContentColor = FondoBlanco)
             ) },
             containerColor = FondoBlanco
