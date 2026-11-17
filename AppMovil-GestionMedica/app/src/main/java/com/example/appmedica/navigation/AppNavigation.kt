@@ -84,7 +84,7 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
         }
 
         composable("citas") {
-            AgendaCitasScreen(datosAgenda, estadoAgenda, agenda::seleccionarRol, agenda::seleccionarPaciente,
+            AgendaCitasScreen(datosAgenda, estadoAgenda,
                 onFiltro = agenda::seleccionarFiltro,
                 onNueva = {
                     agenda.prepararFormulario()

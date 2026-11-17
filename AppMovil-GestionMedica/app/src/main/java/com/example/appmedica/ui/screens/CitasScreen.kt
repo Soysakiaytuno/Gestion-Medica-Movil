@@ -3,12 +3,16 @@ package com.example.appmedica.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
 import com.example.appmedica.model.*
 import com.example.appmedica.ui.theme.*
 import com.example.appmedica.viewmodel.AgendaDatos
@@ -66,50 +70,47 @@ private fun MensajeOperacion(estado: CitasEstado) {
 @Composable
 fun AgendaCitasScreen(
     datos: AgendaDatos, estado: CitasEstado,
-    onRol: (RolDemo) -> Unit, onPaciente: (String) -> Unit,
     onFiltro: (EstadoCita?) -> Unit,
     onNueva: () -> Unit, onDetalle: (String) -> Unit, onVolver: () -> Unit
 ) {
-    MarcoCitas("Agenda de citas", onVolver) {
-        Text("Demostración local · sin inicio de sesión", color = AzulPrincipal)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = estado.rol == RolDemo.MEDICO, onClick = { onRol(RolDemo.MEDICO) }, label = { Text("Médico demo") }, enabled = !estado.ocupado)
-            FilterChip(selected = estado.rol == RolDemo.PACIENTE, onClick = { onRol(RolDemo.PACIENTE) }, label = { Text("Paciente demo") }, enabled = !estado.ocupado)
-        }
+    MarcoCitas("Tu Agenda de Consultas", onVolver) {
         val consultaActual = datos.consulta == estado.consulta
         val cargando = datos.cargando || !consultaActual
+        Button(
+            onClick = onNueva,
+            enabled = !estado.ocupado && !datos.cargando && datos.pacientes.isNotEmpty(),
+            modifier = Modifier.align(Alignment.End)
+        ) { Text("Crear cita") }
+        if (!cargando && datos.error.isEmpty() && datos.pacientes.isEmpty()) Text("Primero agrega un paciente desde el inicio.")
+        FiltrosCita(estado.filtro, onFiltro)
         if (cargando) CircularProgressIndicator()
         if (consultaActual && datos.error.isNotEmpty()) Text(datos.error, color = TextoError)
         MensajeOperacion(estado)
-        if (estado.rol == RolDemo.MEDICO) {
-            Button(onClick = onNueva, enabled = !estado.ocupado && !datos.cargando && datos.pacientes.isNotEmpty()) { Text("Crear cita") }
-            if (!cargando && datos.error.isEmpty() && datos.pacientes.isEmpty()) Text("Primero agrega un paciente desde el inicio.")
-        } else {
-            Text("Selecciona el paciente que representarás en esta demostración.")
-            SelectorPaciente(datos.pacientes, estado.pacienteDemoId, !estado.ocupado, onPaciente)
-        }
-        FiltrosCita(estado.filtro, onFiltro)
         val visibles = if (consultaActual) datos.citas else emptyList()
         if (!cargando && datos.error.isEmpty() && visibles.isEmpty()) {
             Text(
-                when {
-                    estado.rol == RolDemo.PACIENTE && estado.pacienteDemoId.isEmpty() ->
-                        "Selecciona un paciente para ver sus propuestas."
-                    estado.filtro != null -> "No hay citas con este estado."
-                    else -> "No hay citas para mostrar."
-                },
+                if (estado.filtro != null) "No hay citas con este estado." else "No hay citas para mostrar.",
                 color = AzulPrincipal
             )
         }
         visibles.forEach { cita ->
             Card(onClick = { onDetalle(cita.id) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = AzulClaro)) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val p = datos.pacientes.find { it.id == cita.pacienteId }
                     Text(p?.let { "${it.nombre} ${it.apellidoPaterno}" } ?: "Paciente", style = MaterialTheme.typography.titleMedium)
                     Text("${cita.fecha} · ${cita.hora}")
                     Text(cita.motivo)
                     Text("Estado: ${cita.estado.etiqueta}")
-                    Text("Ver cita", color = AzulOscuro)
+                    Row(Modifier.align(Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                        Text("Ver cita", color = AzulOscuro)
+                        Spacer(Modifier.width(4.dp))
+                        Icon(
+                            Icons.AutoMirrored.Outlined.ArrowForward,
+                            contentDescription = null,
+                            tint = AzulOscuro,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
                 }
             }
         }
@@ -118,16 +119,14 @@ fun AgendaCitasScreen(
 
 @Composable
 private fun FiltrosCita(seleccion: EstadoCita?, onFiltro: (EstadoCita?) -> Unit) {
-    Column {
-        Text("Estado de las citas", color = AzulPrincipal)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = seleccion == null, onClick = { onFiltro(null) }, label = { Text("Todas") })
-            FilterChip(selected = seleccion == EstadoCita.PENDIENTE, onClick = { onFiltro(EstadoCita.PENDIENTE) }, label = { Text("Pendientes") })
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = seleccion == EstadoCita.ACEPTADA, onClick = { onFiltro(EstadoCita.ACEPTADA) }, label = { Text("Aceptadas") })
-            FilterChip(selected = seleccion == EstadoCita.RECHAZADA, onClick = { onFiltro(EstadoCita.RECHAZADA) }, label = { Text("Rechazadas") })
-        }
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        FilterChip(selected = seleccion == null, onClick = { onFiltro(null) }, label = { Text("Todas") })
+        FilterChip(selected = seleccion == EstadoCita.PENDIENTE, onClick = { onFiltro(EstadoCita.PENDIENTE) }, label = { Text("Pendientes") })
+        FilterChip(selected = seleccion == EstadoCita.ACEPTADA, onClick = { onFiltro(EstadoCita.ACEPTADA) }, label = { Text("Aceptadas") })
+        FilterChip(selected = seleccion == EstadoCita.RECHAZADA, onClick = { onFiltro(EstadoCita.RECHAZADA) }, label = { Text("Rechazadas") })
     }
 }
 
