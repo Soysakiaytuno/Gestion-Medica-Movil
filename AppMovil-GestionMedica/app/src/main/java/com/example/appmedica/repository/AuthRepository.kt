@@ -7,7 +7,7 @@ import com.example.appmedica.model.SesionUsuario
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-
+import com.example.appmedica.model.IdTokenInfo
 
 
 class AuthRepository(
@@ -96,4 +96,18 @@ class AuthRepository(
             throw excepcion
         }
     }
+
+
+    suspend fun obtenerInfoToken(): IdTokenInfo {
+        val usuario = auth.currentUser
+            ?: error("No hay una sesión iniciada")
+
+        val resultadoToken = usuario.getIdToken(false).await()
+
+        return IdTokenInfo(
+            emitidoEnSegundos = resultadoToken.issuedAtTimestamp,
+            expiraEnSegundos = resultadoToken.expirationTimestamp
+        )
+    }
+
 }
