@@ -14,6 +14,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,6 +45,7 @@ import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoVolverRegistro
 import com.example.appmedica.ui.theme.TextoError
 import com.example.appmedica.ui.theme.TextoOscuro
+import com.example.appmedica.ui.theme.AzulPildora
 import com.example.appmedica.viewmodel.RegistroPacienteFormulario
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -93,7 +96,8 @@ fun RegistrarPacienteScreen(
             mensajeError = mensajeError,
             guardando = guardando,
             onFormularioChange = onFormularioChange,
-            onGuardar = onGuardar
+            onGuardar = onGuardar,
+            onCancelar = onVolver
         )
     }
 }
@@ -105,66 +109,92 @@ fun FormularioPaciente(
     mensajeError: String,
     guardando: Boolean,
     onFormularioChange: ((RegistroPacienteFormulario) -> RegistroPacienteFormulario) -> Unit,
-    onGuardar: () -> Unit
+    onGuardar: () -> Unit,
+    onCancelar: () -> Unit
 ) {
     val focus = LocalFocusManager.current
     Column(
         modifier = modifier
             .fillMaxSize()
             .background(FondoBlanco)
-            .padding(horizontal = 24.dp)
-            .verticalScroll(rememberScrollState()),
-        horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        // Campos: ocupan el espacio disponible y hacen scroll
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(24.dp))
 
-        CampoPersonalizado("Nombre:", formulario.nombre) { valor ->
-            onFormularioChange { it.copy(nombre = valor) }
-        }
-        CampoPersonalizado("Apellido Paterno:", formulario.apellidoPaterno) { valor ->
-            onFormularioChange { it.copy(apellidoPaterno = valor) }
-        }
-        CampoPersonalizado("Apellido Materno:", formulario.apellidoMaterno) { valor ->
-            onFormularioChange { it.copy(apellidoMaterno = valor) }
-        }
-        CampoPersonalizado("CI (7 u 8 dígitos):", formulario.ci, KeyboardType.Number) { valor ->
-            onFormularioChange { it.copy(ci = valor) }
-        }
-        CampoPersonalizado("Fecha Nacimiento (AAAA-MM-DD):", formulario.fechaNacimiento) { valor ->
-            onFormularioChange { it.copy(fechaNacimiento = valor) }
-        }
-        CampoPersonalizado("Email:", formulario.email, KeyboardType.Email) { valor ->
-            onFormularioChange { it.copy(email = valor) }
-        }
-        CampoPersonalizado("Celular (mínimo 8 dígitos):", formulario.celular, KeyboardType.Phone) { valor ->
-            onFormularioChange { it.copy(celular = valor) }
+            CampoPersonalizado("Nombre:", formulario.nombre) { valor ->
+                onFormularioChange { it.copy(nombre = valor) }
+            }
+            CampoPersonalizado("Apellido Paterno:", formulario.apellidoPaterno) { valor ->
+                onFormularioChange { it.copy(apellidoPaterno = valor) }
+            }
+            CampoPersonalizado("Apellido Materno:", formulario.apellidoMaterno) { valor ->
+                onFormularioChange { it.copy(apellidoMaterno = valor) }
+            }
+            CampoPersonalizado("CI (7 u 8 dígitos):", formulario.ci, KeyboardType.Number) { valor ->
+                onFormularioChange { it.copy(ci = valor) }
+            }
+            CampoPersonalizado("Fecha Nacimiento (AAAA-MM-DD):", formulario.fechaNacimiento) { valor ->
+                onFormularioChange { it.copy(fechaNacimiento = valor) }
+            }
+            CampoPersonalizado("Email:", formulario.email, KeyboardType.Email) { valor ->
+                onFormularioChange { it.copy(email = valor) }
+            }
+            CampoPersonalizado("Celular (mínimo 8 dígitos):", formulario.celular, KeyboardType.Phone) { valor ->
+                onFormularioChange { it.copy(celular = valor) }
+            }
+
+            if (mensajeError.isNotBlank()) {
+                Text(
+                    text = mensajeError,
+                    color = TextoError,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
+                )
+            }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        if (mensajeError.isNotBlank()) {
-            Text(
-                text = mensajeError,
-                color = TextoError,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
-
-        Button(
-            onClick = {
-                focus.clearFocus()
-                onGuardar()
-            },
-            enabled = !guardando,
-            colors = ButtonDefaults.buttonColors(containerColor = AzulOscuro),
+        // Botones: fijos abajo
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 48.dp)
         ) {
-            Text("Guardar Paciente", color = FondoBlanco)
-        }
+            Button(
+                onClick = {
+                    focus.clearFocus()
+                    onGuardar()
+                },
+                enabled = !guardando,
+                colors = ButtonDefaults.buttonColors(containerColor = AzulOscuro),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Guardar Paciente", color = FondoBlanco)
+            }
 
-        Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = {
+                    focus.clearFocus()
+                    onCancelar()
+                },
+                border = BorderStroke(1.dp, AzulPildora),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = FondoBlanco,
+                    contentColor = AzulPrincipal
+                ),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Cancelar", color = AzulPrincipal)
+            }
+        }
     }
 }
 
