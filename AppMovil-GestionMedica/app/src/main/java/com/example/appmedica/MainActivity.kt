@@ -5,17 +5,25 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,18 +69,11 @@ class MainActivity : ComponentActivity() {
                                 Column(
                                     modifier = Modifier.fillMaxSize()
                                 ) {
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(horizontal = 16.dp),
-                                        horizontalArrangement = Arrangement.End
-                                    ) {
-                                        TextButton(
-                                            onClick = authViewModel::cerrarSesion
-                                        ) {
-                                            Text("Cerrar sesión")
-                                        }
-                                    }
+
+                                    BarraSesion(
+                                        titulo = "Área médica",
+                                        onCerrarSesion = authViewModel::cerrarSesion
+                                    )
 
                                     Box(
                                         modifier = Modifier.weight(1f)
@@ -84,24 +85,35 @@ class MainActivity : ComponentActivity() {
 
                             RolUsuario.PACIENTE -> {
                                 Column(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(24.dp),
-                                    verticalArrangement = Arrangement.Center,
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                                    modifier = Modifier.fillMaxSize()
                                 ) {
-                                    Text(
-                                        "Bienvenido, ${estado.sesion.perfil.nombre}"
+
+                                    BarraSesion(
+                                        titulo = "Área del paciente",
+                                        onCerrarSesion = authViewModel::cerrarSesion
                                     )
 
-                                    Text(
-                                        "Acceso de paciente: pantalla en preparación"
-                                    )
-
-                                    Button(
-                                        onClick = authViewModel::cerrarSesion
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .fillMaxWidth(),
+                                        contentAlignment = Alignment.Center
                                     ) {
-                                        Text("Cerrar sesión")
+                                        Column(
+                                            modifier = Modifier.padding(24.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Text(
+                                                text = "Bienvenido, ${estado.sesion.perfil.nombre}",
+                                                style = MaterialTheme.typography.titleMedium
+                                            )
+
+                                            Text(
+                                                text = "Acceso de paciente: pantalla en preparación",
+                                                style = MaterialTheme.typography.bodyMedium
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -117,5 +129,51 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun BarraSesion(
+    titulo: String,
+    onCerrarSesion: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surface)
+            .statusBarsPadding()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+
+            Text(
+                text = titulo,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f)
+            )
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            OutlinedButton(
+                onClick = onCerrarSesion,
+                shape = RoundedCornerShape(50.dp),
+                border = BorderStroke(
+                    1.dp,
+                    MaterialTheme.colorScheme.error
+                ),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    contentColor = MaterialTheme.colorScheme.error
+                )
+            ) {
+                Text("Cerrar sesión")
+            }
+        }
+
+        HorizontalDivider()
     }
 }
