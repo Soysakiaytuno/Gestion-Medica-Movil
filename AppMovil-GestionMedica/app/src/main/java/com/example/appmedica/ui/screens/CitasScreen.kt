@@ -1,5 +1,6 @@
 package com.example.appmedica.ui.screens
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -25,7 +26,12 @@ import com.example.appmedica.viewmodel.DetalleCitaDatos
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MarcoCitas(titulo: String, volver: () -> Unit, contenido: @Composable ColumnScope.() -> Unit) {
+private fun MarcoCitas(
+    titulo: String,
+    volver: () -> Unit,
+    botones: (@Composable ColumnScope.() -> Unit)? = null,
+    contenido: @Composable ColumnScope.() -> Unit
+) {
     // Tema local que reutiliza la paleta; no modifica las pantallas existentes.
     MaterialTheme(colorScheme = lightColorScheme(
         primary = AzulOscuro, onPrimary = FondoBlanco,
@@ -41,26 +47,76 @@ private fun MarcoCitas(titulo: String, volver: () -> Unit, contenido: @Composabl
             ) },
             containerColor = FondoBlanco
         ) { padding ->
-            Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)
-                .imePadding().verticalScroll(rememberScrollState()).padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp), content = contenido)
+            Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding()) {
+                // Contenido: ocupa el espacio disponible y hace scroll
+                Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()).padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp), content = contenido)
+                // Botones: fijos abajo (mismas medidas que en Registrar Paciente)
+                if (botones != null) {
+                    Column(Modifier.fillMaxWidth().padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 48.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp), content = botones)
+                }
+            }
         }
     }
 }
 
+private fun nombrePaciente(p: Paciente) = "${p.nombre} ${p.apellidoPaterno}"
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectorPaciente(pacientes: List<Paciente>, seleccionado: String, enabled: Boolean, onSeleccionar: (String) -> Unit) {
+private fun BuscadorPaciente(
+    pacientes: List<Paciente>,
+    coincidencias: List<Paciente>,
+    busqueda: String,
+    seleccionado: String,
+    enabled: Boolean,
+    onBusquedaChange: (String) -> Unit,
+    onSeleccionar: (String) -> Unit
+) {
+    val focus = LocalFocusManager.current
     var abierto by remember { mutableStateOf(false) }
-    val paciente = pacientes.find { it.id == seleccionado }
-    Box {
-        OutlinedButton(onClick = { abierto = true }, enabled = enabled && pacientes.isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
-            Text(paciente?.let { "${it.nombre} ${it.apellidoPaterno} · CI ${it.ci}" } ?: "Seleccionar paciente")
-        }
-        DropdownMenu(expanded = abierto, onDismissRequest = { abierto = false }) {
-            pacientes.forEach { p -> DropdownMenuItem(
-                text = { Text("${p.nombre} ${p.apellidoPaterno} · CI ${p.ci}") },
-                onClick = { abierto = false; onSeleccionar(p.id) }
-            ) }
+    val pacienteSeleccionado = pacientes.find { it.id == seleccionado }
+    // Al editar una cita, muestra en el campo el paciente que ya tiene asignado
+    LaunchedEffect(pacienteSeleccionado) {
+        pacienteSeleccionado?.let { onBusquedaChange(nombrePaciente(it)) }
+    }
+    ExposedDropdownMenuBox(expanded = abierto && enabled, onExpandedChange = { abierto = it }) {
+        OutlinedTextField(
+            value = busqueda,
+            onValueChange = { texto ->
+                onBusquedaChange(texto)
+                // Si se escribe sobre un paciente ya elegido, la selección se quita
+                if (seleccionado.isNotEmpty()) onSeleccionar("")
+                abierto = true
+            },
+            label = { Text("Paciente") },
+            placeholder = { Text("Buscar paciente") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = abierto && enabled) },
+            singleLine = true,
+            enabled = enabled,
+            modifier = Modifier.fillMaxWidth().menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+        )
+        ExposedDropdownMenu(
+            expanded = abierto && enabled,
+            onDismissRequest = { abierto = false },
+            containerColor = AzulClaro
+        ) {
+            if (coincidencias.isEmpty()) {
+                DropdownMenuItem(text = { Text("No se encontraron pacientes") }, onClick = {}, enabled = false)
+            }
+            coincidencias.forEach { p ->
+                DropdownMenuItem(
+                    text = { Text("${nombrePaciente(p)} (CI: ${p.ci})") },
+                    onClick = {
+                        abierto = false
+                        focus.clearFocus()
+                        onBusquedaChange(nombrePaciente(p))
+                        onSeleccionar(p.id)
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                )
+            }
         }
     }
 }
@@ -135,27 +191,58 @@ private fun FiltrosCita(seleccion: EstadoCita?, onFiltro: (EstadoCita?) -> Unit)
 }
 
 @Composable
-fun FormularioCitaScreen(datos: AgendaDatos, estado: CitasEstado, onCambio: (FormularioCita) -> Unit, onGuardar: () -> Unit, onVolver: () -> Unit) {
+fun FormularioCitaScreen(
+    datos: AgendaDatos, estado: CitasEstado,
+    busqueda: String, coincidencias: List<Paciente>, onBusquedaChange: (String) -> Unit,
+    onCambio: (FormularioCita) -> Unit, onGuardar: () -> Unit, onVolver: () -> Unit
+) {
     val f = estado.formulario
     val focus = LocalFocusManager.current
-    MarcoCitas(if (f.id == null) "Nueva cita" else "Editar cita", onVolver) {
-        Text("Médico demo · propuesta pendiente", color = AzulPrincipal)
-        if (estado.rol != RolDemo.MEDICO) {
+    val esMedico = estado.rol == RolDemo.MEDICO
+    MarcoCitas(
+        titulo = if (f.id == null) "Nueva Cita" else "Editar Cita",
+        volver = onVolver,
+        botones = {
+            if (esMedico) {
+                Button(
+                    onClick = {
+                        focus.clearFocus()
+                        onGuardar()
+                    },
+                    enabled = !estado.ocupado,
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Guardar Cita") }
+                OutlinedButton(
+                    onClick = {
+                        focus.clearFocus()
+                        onVolver()
+                    },
+                    border = BorderStroke(1.dp, AzulPildora),
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        containerColor = FondoBlanco,
+                        contentColor = AzulPrincipal
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                ) { Text("Cancelar", color = AzulPrincipal) }
+            }
+        }
+    ) {
+        if (!esMedico) {
             Text("El paciente demo no puede crear ni editar citas.")
         } else {
-            SelectorPaciente(datos.pacientes, f.pacienteId, !estado.ocupado) { onCambio(f.copy(pacienteId = it)) }
+            BuscadorPaciente(
+                pacientes = datos.pacientes,
+                coincidencias = coincidencias,
+                busqueda = busqueda,
+                seleccionado = f.pacienteId,
+                enabled = !estado.ocupado,
+                onBusquedaChange = onBusquedaChange,
+                onSeleccionar = { onCambio(f.copy(pacienteId = it)) }
+            )
             OutlinedTextField(value = f.fecha, onValueChange = { onCambio(f.copy(fecha = it)) }, label = { Text("Fecha (AAAA-MM-DD)") }, singleLine = true, enabled = !estado.ocupado, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = f.hora, onValueChange = { onCambio(f.copy(hora = it)) }, label = { Text("Hora (HH:mm)") }, singleLine = true, enabled = !estado.ocupado, modifier = Modifier.fillMaxWidth())
             OutlinedTextField(value = f.motivo, onValueChange = { onCambio(f.copy(motivo = it)) }, label = { Text("Motivo de la cita") }, minLines = 2, enabled = !estado.ocupado, modifier = Modifier.fillMaxWidth())
             MensajeOperacion(estado)
-            Button(
-                onClick = {
-                    focus.clearFocus()
-                    onGuardar()
-                },
-                enabled = !estado.ocupado,
-                modifier = Modifier.fillMaxWidth()
-            ) { Text("Guardar cita") }
         }
     }
 }
