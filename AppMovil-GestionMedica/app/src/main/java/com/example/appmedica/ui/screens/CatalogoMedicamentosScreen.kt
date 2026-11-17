@@ -17,12 +17,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.appmedica.ui.components.BotonVolver
 import com.example.appmedica.ui.theme.AzulClaro
 import com.example.appmedica.ui.theme.AzulOscuro
 import com.example.appmedica.ui.theme.AzulPrincipal
@@ -41,7 +41,7 @@ fun CatalogoMedicamentosScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Catálogo openFDA") },
-                navigationIcon = { TextButton(onClick = volver) { Text("Volver", color = FondoBlanco) } },
+                navigationIcon = { BotonVolver(onClick = volver, modifier = Modifier.padding(start = 8.dp)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = AzulPrincipal,
                     titleContentColor = FondoBlanco

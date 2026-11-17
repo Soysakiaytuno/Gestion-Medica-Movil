@@ -38,11 +38,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.example.appmedica.ui.components.BotonVolver
 import com.example.appmedica.ui.theme.AzulClaro
 import com.example.appmedica.ui.theme.AzulOscuro
 import com.example.appmedica.ui.theme.AzulPrincipal
 import com.example.appmedica.ui.theme.FondoBlanco
-import com.example.appmedica.ui.theme.FondoVolverRegistro
 import com.example.appmedica.ui.theme.TextoError
 import com.example.appmedica.ui.theme.TextoOscuro
 import com.example.appmedica.ui.theme.AzulPildora
@@ -68,20 +68,7 @@ fun RegistrarPacienteScreen(
                         fontWeight = FontWeight.Bold
                     )
                 },
-                navigationIcon = {
-                    IconButton(
-                        onClick = onVolver,
-                        modifier = Modifier
-                            .padding(start = 8.dp)
-                            .background(FondoVolverRegistro, shape = RoundedCornerShape(8.dp))
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Volver",
-                            tint = FondoBlanco
-                        )
-                    }
-                },
+                navigationIcon = { BotonVolver(onClick = onVolver, modifier = Modifier.padding(start = 8.dp)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = AzulPrincipal)
             )
         }

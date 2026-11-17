@@ -1,10 +1,6 @@
 package com.example.appmedica.ui.screens
 
 import androidx.compose.foundation.background
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,13 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.appmedica.model.Diagnostico
 import com.example.appmedica.model.Paciente
+import com.example.appmedica.ui.components.BotonVolver
 import com.example.appmedica.ui.theme.DivisorHistorial
 import com.example.appmedica.ui.theme.FondoAvatarHistorial
 import com.example.appmedica.ui.theme.FondoBlanco
 import com.example.appmedica.ui.theme.FondoEncabezadoHistorial
 import com.example.appmedica.ui.theme.FondoTarjetaDiagnostico
 import com.example.appmedica.ui.theme.FondoTituloDiagnostico
-import com.example.appmedica.ui.theme.FondoVolverHistorial
 import com.example.appmedica.ui.theme.TextoOscuro
 
 @Composable
@@ -116,12 +112,7 @@ fun TopBarHistorial(onVolver: () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = onVolver,
-            modifier = Modifier.background(FondoVolverHistorial, RoundedCornerShape(10.dp))
-        ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver", tint = FondoBlanco)
-        }
+        BotonVolver(onClick = onVolver)
 
         Spacer(modifier = Modifier.width(16.dp))
 

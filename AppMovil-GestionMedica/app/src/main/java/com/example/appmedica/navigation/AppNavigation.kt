@@ -84,7 +84,7 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
         }
 
         composable("citas") {
-            AgendaCitasScreen(datosAgenda, estadoAgenda, agenda::seleccionarRol, agenda::seleccionarPaciente,
+            AgendaCitasScreen(datosAgenda, estadoAgenda,
                 onFiltro = agenda::seleccionarFiltro,
                 onNueva = {
                     agenda.prepararFormulario()
@@ -96,7 +96,15 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 }, onVolver = volver)
         }
         composable("formulario_cita") { entrada ->
-            FormularioCitaScreen(datosAgenda, estadoAgenda, agenda::cambiarFormulario,
+            // Mismo buscador que la pantalla de Inicio, con su propia instancia para este formulario
+            val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
+            val consulta by busqueda.query.collectAsStateWithLifecycle()
+            val coincidencias by busqueda.pacientes.collectAsStateWithLifecycle()
+            FormularioCitaScreen(datosAgenda, estadoAgenda,
+                busqueda = consulta,
+                coincidencias = coincidencias,
+                onBusquedaChange = busqueda::onQueryChange,
+                onCambio = agenda::cambiarFormulario,
                 onGuardar = { agenda.guardar { if (navController.currentBackStackEntry == entrada) volver() } },
                 onVolver = volver)
         }
