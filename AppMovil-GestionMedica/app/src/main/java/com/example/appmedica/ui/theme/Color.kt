@@ -21,3 +21,5 @@ val FondoTituloDiagnostico = Color(0xFF96B3C4)
 val FondoTarjetaDiagnostico = Color(0xFFD6EEFF)
 val FondoAvatarHistorial = Color(0xFF3E4A59)
 val DivisorHistorial = Color(0xFF4A4A4A)
+
+val RojoEliminar = Color(0xFF8A2020)

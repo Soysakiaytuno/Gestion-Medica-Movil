@@ -13,6 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import com.example.appmedica.model.*
 import com.example.appmedica.ui.theme.*
 import com.example.appmedica.viewmodel.AgendaDatos
@@ -160,13 +162,29 @@ fun FormularioCitaScreen(datos: AgendaDatos, estado: CitasEstado, onCambio: (For
 fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Paciente>, estado: CitasEstado, onEditar: (Cita) -> Unit, onResponder: (EstadoCita) -> Unit, onEliminar: () -> Unit, onVolver: () -> Unit) {
     val cita = detalle.cita
     var confirmar by rememberSaveable(id) { mutableStateOf(false) }
-    MarcoCitas("Detalle de cita", onVolver) {
-        Text("${if (estado.rol == RolDemo.MEDICO) "Médico" else "Paciente"} demo · datos locales")
+    MarcoCitas("Detalle de Cita", onVolver) {
         if (detalle.cargando) CircularProgressIndicator()
         else if (detalle.error.isNotEmpty()) Text(detalle.error, color = TextoError)
         else if (cita == null) Text("La cita ya no está disponible.")
         else if (estado.rol == RolDemo.PACIENTE && estado.pacienteDemoId != cita.pacienteId) Text("Esta cita no corresponde al paciente seleccionado.")
         else {
+            if (estado.rol == RolDemo.MEDICO) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                ) {
+                    FilledIconButton(
+                        onClick = { onEditar(cita) },
+                        enabled = !estado.ocupado && cita.estado == EstadoCita.PENDIENTE,
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = AzulOscuro, contentColor = FondoBlanco)
+                    ) { Icon(Icons.Outlined.Edit, contentDescription = "Editar cita") }
+                    FilledIconButton(
+                        onClick = { confirmar = true },
+                        enabled = !estado.ocupado,
+                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = RojoEliminar, contentColor = FondoBlanco)
+                    ) { Icon(Icons.Outlined.Delete, contentDescription = "Eliminar cita") }
+                }
+            }
             val paciente = pacientes.find { it.id == cita.pacienteId }
             Text(paciente?.let { "${it.nombre} ${it.apellidoPaterno} ${it.apellidoMaterno}" } ?: "Paciente", style = MaterialTheme.typography.titleLarge)
             Text("Fecha: ${cita.fecha}")
@@ -174,14 +192,12 @@ fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Pac
             Text("Motivo: ${cita.motivo}")
             Text("Estado: ${cita.estado.etiqueta}")
             MensajeOperacion(estado)
-            if (estado.rol == RolDemo.MEDICO) {
-                if (cita.estado == EstadoCita.PENDIENTE) Button(onClick = { onEditar(cita) }, enabled = !estado.ocupado) { Text("Editar cita") }
-                else Text("Esta propuesta ya fue respondida. Para otro horario, crea una nueva cita.")
-                OutlinedButton(onClick = { confirmar = true }, enabled = !estado.ocupado) { Text("Eliminar cita") }
-            } else if (cita.estado == EstadoCita.PENDIENTE) {
-                Button(onClick = { onResponder(EstadoCita.ACEPTADA) }, enabled = !estado.ocupado) { Text("Aceptar cita") }
-                OutlinedButton(onClick = { onResponder(EstadoCita.RECHAZADA) }, enabled = !estado.ocupado) { Text("Rechazar cita") }
-            } else Text("Tu respuesta ya fue registrada.")
+            if (estado.rol == RolDemo.PACIENTE) {
+                if (cita.estado == EstadoCita.PENDIENTE) {
+                    Button(onClick = { onResponder(EstadoCita.ACEPTADA) }, enabled = !estado.ocupado) { Text("Aceptar cita") }
+                    OutlinedButton(onClick = { onResponder(EstadoCita.RECHAZADA) }, enabled = !estado.ocupado) { Text("Rechazar cita") }
+                } else Text("Tu respuesta ya fue registrada.")
+            }
         }
         if (confirmar && cita != null && estado.rol == RolDemo.MEDICO) AlertDialog(
             onDismissRequest = { confirmar = false }, title = { Text("¿Eliminar esta cita?") },
