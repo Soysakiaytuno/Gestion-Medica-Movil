@@ -22,7 +22,7 @@ abstract class AppDatabase : RoomDatabase() {
                     CREATE TABLE IF NOT EXISTS citas (
                         id TEXT NOT NULL PRIMARY KEY, pacienteId TEXT NOT NULL,
                         fecha TEXT NOT NULL, hora TEXT NOT NULL, motivo TEXT NOT NULL,
-                        estado TEXT NOT NULL,
+                        estado TEXT NOT NULL, notificado BOOLEAN NOT NULL DEFAULT 0,
                         FOREIGN KEY(pacienteId) REFERENCES pacientes(id) ON UPDATE NO ACTION ON DELETE RESTRICT
                     )
                 """.trimIndent())
