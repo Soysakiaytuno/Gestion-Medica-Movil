@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -94,25 +95,10 @@ class MainActivity : ComponentActivity() {
                                     )
 
                                     Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .fillMaxWidth(),
-                                        contentAlignment = Alignment.Center
+                                        modifier = Modifier.weight(1f)
                                     ) {
-                                        Column(
-                                            modifier = Modifier.padding(24.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.Center
-                                        ) {
-                                            Text(
-                                                text = "Bienvenido, ${estado.sesion.perfil.nombre}",
-                                                style = MaterialTheme.typography.titleMedium
-                                            )
-
-                                            Text(
-                                                text = "Acceso de paciente: pantalla en preparación",
-                                                style = MaterialTheme.typography.bodyMedium
-                                            )
+                                        key(estado.sesion.perfil.uid, estado.sesion.perfil.rol, estado.sesion.perfil.pacienteId) {
+                                            AppNavigation(pacientes, citas, estado.sesion.perfil)
                                         }
                                     }
                                 }
