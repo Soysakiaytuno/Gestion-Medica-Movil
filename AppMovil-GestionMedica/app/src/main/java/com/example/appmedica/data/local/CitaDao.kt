@@ -41,4 +41,7 @@ interface CitaDao {
 
     @Query("DELETE FROM citas WHERE id = :id")
     suspend fun eliminar(id: String): Int
+
+    @Query("UPDATE citas SET notificado = :notificado WHERE id = :citaId")
+    suspend fun actualizarEstadoNotificacion(citaId: String, notificado: Boolean)
 }

@@ -46,7 +46,7 @@ class ReceptorCita : BroadcastReceiver() {
 
         // Marcar como notificado en la base de datos Room
         CoroutineScope(Dispatchers.IO).launch {
-            val database = AppDatabase.getDatabase(context)
+            val database = AppDatabase.obtener(context)
             database.citaDao().actualizarEstadoNotificacion(citaId, true)
         }
     }
