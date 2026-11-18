@@ -198,7 +198,7 @@ fun FormularioCitaScreen(
 ) {
     val f = estado.formulario
     val focus = LocalFocusManager.current
-    val esMedico = estado.rol == RolDemo.MEDICO
+    val esMedico = estado.rol == RolUsuario.MEDICO
     MarcoCitas(
         titulo = if (f.id == null) "Nueva Cita" else "Editar Cita",
         volver = onVolver,
@@ -228,7 +228,7 @@ fun FormularioCitaScreen(
         }
     ) {
         if (!esMedico) {
-            Text("El paciente demo no puede crear ni editar citas.")
+            Text("Solo el médico puede crear o editar citas.")
         } else {
             BuscadorPaciente(
                 pacientes = datos.pacientes,
@@ -255,9 +255,9 @@ fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Pac
         if (detalle.cargando) CircularProgressIndicator()
         else if (detalle.error.isNotEmpty()) Text(detalle.error, color = TextoError)
         else if (cita == null) Text("La cita ya no está disponible.")
-        else if (estado.rol == RolDemo.PACIENTE && estado.pacienteDemoId != cita.pacienteId) Text("Esta cita no corresponde al paciente seleccionado.")
+        else if (estado.rol == RolUsuario.PACIENTE && estado.pacienteId != cita.pacienteId) Text("Esta cita no te corresponde.")
         else {
-            if (estado.rol == RolDemo.MEDICO) {
+            if (estado.rol == RolUsuario.MEDICO) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
@@ -281,14 +281,14 @@ fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Pac
             Text("Motivo: ${cita.motivo}")
             Text("Estado: ${cita.estado.etiqueta}")
             MensajeOperacion(estado)
-            if (estado.rol == RolDemo.PACIENTE) {
+            if (estado.rol == RolUsuario.PACIENTE) {
                 if (cita.estado == EstadoCita.PENDIENTE) {
                     Button(onClick = { onResponder(EstadoCita.ACEPTADA) }, enabled = !estado.ocupado) { Text("Aceptar cita") }
                     OutlinedButton(onClick = { onResponder(EstadoCita.RECHAZADA) }, enabled = !estado.ocupado) { Text("Rechazar cita") }
                 } else Text("Tu respuesta ya fue registrada.")
             }
         }
-        if (confirmar && cita != null && estado.rol == RolDemo.MEDICO) AlertDialog(
+        if (confirmar && cita != null && estado.rol == RolUsuario.MEDICO) AlertDialog(
             onDismissRequest = { confirmar = false }, title = { Text("¿Eliminar esta cita?") },
             text = { Text("Se eliminará la cita de ${cita.fecha} a las ${cita.hora}. Esta acción no se puede deshacer.") },
             confirmButton = { TextButton(onClick = { confirmar = false; onEliminar() }) { Text("Eliminar") } },
