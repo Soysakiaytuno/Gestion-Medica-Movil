@@ -26,6 +26,9 @@ interface PacienteDao {
     @Query("SELECT EXISTS(SELECT 1 FROM pacientes WHERE ci = :ci)")
     suspend fun existeCi(ci: String): Boolean
 
+    @Query("SELECT EXISTS(SELECT 1 FROM pacientes WHERE id = :id)")
+    suspend fun existeId(id: String): Boolean
+
     @Query("SELECT EXISTS(SELECT 1 FROM pacientes WHERE email = :email)")
     suspend fun existeEmail(email: String): Boolean
 }

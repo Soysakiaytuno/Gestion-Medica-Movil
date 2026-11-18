@@ -61,7 +61,12 @@ private fun MarcoCitas(
     }
 }
 
-private fun nombrePaciente(p: Paciente) = "${p.nombre} ${p.apellidoPaterno}"
+private fun nombrePaciente(p: Paciente, incluirMaterno: Boolean = false): String =
+    listOfNotNull(p.nombre, p.apellidoPaterno, p.apellidoMaterno.takeIf { incluirMaterno })
+        .map { it.trim() }
+        .filter { it.isNotEmpty() }
+        .joinToString(" ")
+        .ifEmpty { "Paciente" }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -133,15 +138,19 @@ fun AgendaCitasScreen(
     onFiltro: (EstadoCita?) -> Unit,
     onNueva: () -> Unit, onDetalle: (String) -> Unit, onVolver: () -> Unit
 ) {
-    MarcoCitas("Tu Agenda de Consultas", onVolver) {
+    val esMedico = estado.rol == RolUsuario.MEDICO
+    val titulo = if (estado.rol == RolUsuario.PACIENTE) "Mis Citas" else "Tu Agenda de Consultas"
+    MarcoCitas(titulo, onVolver) {
         val consultaActual = datos.consulta == estado.consulta
         val cargando = datos.cargando || !consultaActual
-        Button(
-            onClick = onNueva,
-            enabled = !estado.ocupado && !datos.cargando && datos.pacientes.isNotEmpty(),
-            modifier = Modifier.align(Alignment.End)
-        ) { Text("Crear cita") }
-        if (!cargando && datos.error.isEmpty() && datos.pacientes.isEmpty()) Text("Primero agrega un paciente desde el inicio.")
+        if (esMedico) {
+            Button(
+                onClick = onNueva,
+                enabled = !estado.ocupado && !datos.cargando && datos.pacientes.isNotEmpty(),
+                modifier = Modifier.align(Alignment.End)
+            ) { Text("Crear cita") }
+            if (!cargando && datos.error.isEmpty() && datos.pacientes.isEmpty()) Text("Primero agrega un paciente desde el inicio.")
+        }
         FiltrosCita(estado.filtro, onFiltro)
         if (cargando) CircularProgressIndicator()
         if (consultaActual && datos.error.isNotEmpty()) Text(datos.error, color = TextoError)
@@ -157,7 +166,7 @@ fun AgendaCitasScreen(
             Card(onClick = { onDetalle(cita.id) }, modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = AzulClaro)) {
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     val p = datos.pacientes.find { it.id == cita.pacienteId }
-                    Text(p?.let { "${it.nombre} ${it.apellidoPaterno}" } ?: "Paciente", style = MaterialTheme.typography.titleMedium)
+                    Text(p?.let { nombrePaciente(it) } ?: "Paciente", style = MaterialTheme.typography.titleMedium)
                     Text("${cita.fecha} · ${cita.hora}")
                     Text(cita.motivo)
                     Text("Estado: ${cita.estado.etiqueta}")
@@ -255,7 +264,9 @@ fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Pac
         if (detalle.cargando) CircularProgressIndicator()
         else if (detalle.error.isNotEmpty()) Text(detalle.error, color = TextoError)
         else if (cita == null) Text("La cita ya no está disponible.")
-        else if (estado.rol == RolUsuario.PACIENTE && estado.pacienteId != cita.pacienteId) Text("Esta cita no te corresponde.")
+        else if (estado.rol == RolUsuario.PACIENTE && (estado.pacienteId.isNullOrBlank() || estado.pacienteId != cita.pacienteId)) {
+            Text("Esta cita no te corresponde.")
+        }
         else {
             if (estado.rol == RolUsuario.MEDICO) {
                 Row(
@@ -275,7 +286,7 @@ fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Pac
                 }
             }
             val paciente = pacientes.find { it.id == cita.pacienteId }
-            Text(paciente?.let { "${it.nombre} ${it.apellidoPaterno} ${it.apellidoMaterno}" } ?: "Paciente", style = MaterialTheme.typography.titleLarge)
+            Text(paciente?.let { nombrePaciente(it, incluirMaterno = true) } ?: "Paciente", style = MaterialTheme.typography.titleLarge)
             Text("Fecha: ${cita.fecha}")
             Text("Hora: ${cita.hora}")
             Text("Motivo: ${cita.motivo}")

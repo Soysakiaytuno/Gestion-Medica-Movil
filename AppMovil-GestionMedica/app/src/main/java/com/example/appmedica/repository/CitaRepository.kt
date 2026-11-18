@@ -20,7 +20,7 @@ class CitaRepository(database: AppDatabase, private val context: Context) {
     fun observarAgenda(estado: EstadoCita?, pacienteId: String?) =
         dao.observarFiltradas(estado, pacienteId).map { lista -> lista.map { it.toDominio() } }
 
-    fun observarProxima() = dao.observarProxima().map { it?.toDominio() }
+    fun observarProxima(pacienteId: String? = null) = dao.observarProxima(pacienteId).map { it?.toDominio() }
 
     suspend fun guardar(formulario: FormularioCita, rol: RolUsuario) {
         require(rol == RolUsuario.MEDICO) { "Solo el médico puede guardar citas." }
