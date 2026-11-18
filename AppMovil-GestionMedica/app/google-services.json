@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "41411384041",
+    "project_id": "gestionmedicademo",
+    "storage_bucket": "gestionmedicademo.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:41411384041:android:af9ad630d591a13499d678",
+        "android_client_info": {
+          "package_name": "com.example.appmedica"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDsxirjJNnoZSMc97AcHT02-08c-OkDrAk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

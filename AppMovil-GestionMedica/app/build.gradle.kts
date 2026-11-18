@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.ksp)
+    // Habilita la configuración de Firebase en este módulo
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -66,4 +68,17 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
     implementation("androidx.compose.material:material-icons-core")
+
+    // Firebase BoM: administra versiones compatibles
+    implementation(platform(libs.firebase.bom))
+
+    // Autenticación mediante correo, contraseña y JWT
+    implementation(libs.firebase.auth)
+
+    // Consulta de perfiles y roles
+    implementation(libs.firebase.firestore)
+
+    // Permite utilizar await() con Firebase
+    implementation(libs.kotlinx.coroutines.play.services)
+
 }
