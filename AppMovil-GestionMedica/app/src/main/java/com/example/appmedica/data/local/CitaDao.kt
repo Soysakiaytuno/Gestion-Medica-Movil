@@ -24,11 +24,13 @@ interface CitaDao {
 
     @Query("""
         SELECT * FROM citas
-        WHERE estado != 'RECHAZADA' AND fecha || ' ' || hora > strftime('%Y-%m-%d %H:%M', 'now', 'localtime')
+        WHERE (:pacienteId IS NULL OR pacienteId = :pacienteId)
+          AND estado != 'RECHAZADA'
+          AND fecha || ' ' || hora > strftime('%Y-%m-%d %H:%M', 'now', 'localtime')
         ORDER BY fecha, hora, id
         LIMIT 1
     """)
-    fun observarProxima(): Flow<CitaEntity?>
+    fun observarProxima(pacienteId: String? = null): Flow<CitaEntity?>
 
     @Query("SELECT * FROM citas WHERE id = :id")
     fun observarPorId(id: String): Flow<CitaEntity?>

@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -45,7 +46,7 @@ data class CitasEstado(
     val filtro: EstadoCita? = null
 ) {
     val consulta: ConsultaAgenda
-        get() = ConsultaAgenda(filtro, pacienteId.takeIf { rol == RolUsuario.PACIENTE })
+        get() = ConsultaAgenda(filtro, pacienteId?.takeIf { rol == RolUsuario.PACIENTE && it.isNotBlank() })
 }
 
 data class DetalleCitaDatos(
@@ -74,43 +75,73 @@ class CitasViewModel(
     perfil: PerfilUsuario
 ) : ViewModel() {
     // El rol y el paciente vienen de la sesión de Firebase y no cambian durante la sesión
-    private val mutableEstado = MutableStateFlow(CitasEstado(rol = perfil.rol, pacienteId = perfil.pacienteId))
+    private val esPaciente = perfil.rol == RolUsuario.PACIENTE
+    private val pacienteIdSeguro = perfil.pacienteId?.takeIf { it.isNotBlank() }
+    private val mutableEstado = MutableStateFlow(CitasEstado(rol = perfil.rol, pacienteId = pacienteIdSeguro))
     val estado = mutableEstado.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val datos = estado.map { it.consulta }.distinctUntilChanged()
         .flatMapLatest { consulta ->
-            combine(
-                pacientes.pacientes,
-                repository.observarAgenda(consulta.estado, consulta.pacienteId)
-            ) { listaPacientes, listaCitas ->
-                AgendaDatos(listaPacientes, listaCitas, cargando = false, consulta = consulta)
-            }.onStart {
-                emit(AgendaDatos(consulta = consulta))
-            }.catch { error ->
-                if (error is CancellationException) throw error
-                emit(AgendaDatos(cargando = false, error = "No se pudo cargar la agenda.", consulta = consulta))
+            if (esPaciente && consulta.pacienteId.isNullOrBlank()) {
+                flowOf(AgendaDatos(cargando = false, consulta = consulta))
+            } else {
+                val flujoPacientes = if (esPaciente) {
+                    pacientes.observarPaciente(consulta.pacienteId!!).map(::listOfNotNull)
+                } else {
+                    pacientes.pacientes
+                }
+                combine(
+                    flujoPacientes,
+                    repository.observarAgenda(consulta.estado, consulta.pacienteId)
+                ) { listaPacientes, listaCitas ->
+                    AgendaDatos(listaPacientes, listaCitas, cargando = false, consulta = consulta)
+                }.onStart {
+                    emit(AgendaDatos(consulta = consulta))
+                }.catch { error ->
+                    if (error is CancellationException) throw error
+                    emit(AgendaDatos(cargando = false, error = "No se pudo cargar la agenda.", consulta = consulta))
+                }
             }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AgendaDatos())
 
-    val resumenProxima = combine(repository.observarProxima(), pacientes.pacientes) { cita, lista ->
-        if (cita == null) {
-            ResumenProxima(mensaje = "No hay próximas citas.")
+    private val mensajeSinProximaCita =
+        if (esPaciente) "No tienes próximas citas." else "No hay próximas citas."
+
+    val resumenProxima = if (esPaciente && pacienteIdSeguro == null) {
+        flowOf(ResumenProxima(mensaje = mensajeSinProximaCita))
+    } else {
+        val flujoProxima = repository.observarProxima(if (esPaciente) pacienteIdSeguro else null)
+        val flujoPacientes = if (esPaciente) {
+            pacientes.observarPaciente(pacienteIdSeguro!!).map(::listOfNotNull)
         } else {
-            val paciente = lista.firstOrNull { it.id == cita.pacienteId }
-            ResumenProxima(
-                ProximaCita(
-                    citaId = cita.id,
-                    paciente = paciente?.let { "${it.apellidoPaterno} ${it.nombre}" } ?: "Paciente",
-                    motivo = cita.motivo,
-                    fecha = cita.fecha,
-                    hora = cita.hora
-                )
-            )
+            pacientes.pacientes
         }
-    }.catch { error ->
-        if (error is CancellationException) throw error
-        emit(ResumenProxima(mensaje = "No se pudo cargar la próxima cita."))
+        combine(flujoProxima, flujoPacientes) { cita, lista ->
+            if (cita == null) {
+                ResumenProxima(mensaje = mensajeSinProximaCita)
+            } else {
+                val paciente = lista.firstOrNull { it.id == cita.pacienteId }
+                val nombrePaciente = paciente?.let {
+                    listOf(it.apellidoPaterno.trim(), it.nombre.trim())
+                        .filter { parte -> parte.isNotEmpty() }
+                        .joinToString(" ")
+                        .ifEmpty { "Paciente" }
+                } ?: "Paciente"
+                ResumenProxima(
+                    ProximaCita(
+                        citaId = cita.id,
+                        paciente = nombrePaciente,
+                        motivo = cita.motivo,
+                        fecha = cita.fecha,
+                        hora = cita.hora
+                    )
+                )
+            }
+        }.catch { error ->
+            if (error is CancellationException) throw error
+            emit(ResumenProxima(mensaje = "No se pudo cargar la próxima cita."))
+        }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ResumenProxima())
 
     fun seleccionarFiltro(filtro: EstadoCita?) {
