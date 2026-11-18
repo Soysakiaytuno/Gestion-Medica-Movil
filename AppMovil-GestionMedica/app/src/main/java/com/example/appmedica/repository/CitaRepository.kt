@@ -1,5 +1,6 @@
 package com.example.appmedica.repository
 
+import android.content.Context
 import com.example.appmedica.data.local.AppDatabase
 import com.example.appmedica.data.local.CitaEntity
 import com.example.appmedica.model.Cita
@@ -7,11 +8,12 @@ import com.example.appmedica.model.EstadoCita
 import com.example.appmedica.model.FormularioCita
 import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.model.validarCita
+import com.example.appmedica.utils.Recordatorio
 import java.util.UUID
 import kotlinx.coroutines.flow.map
 
 // Reglas del prototipo local. No sustituyen autorización en un servidor.
-class CitaRepository(database: AppDatabase) {
+class CitaRepository(database: AppDatabase, private val context: Context) {
     private val dao = database.citaDao()
     val citas = dao.observarTodas().map { lista -> lista.map { it.toDominio() } }
     fun observarCita(id: String) = dao.observarPorId(id).map { it?.toDominio() }
@@ -27,8 +29,20 @@ class CitaRepository(database: AppDatabase) {
         val hora = formulario.hora.trim()
         val motivo = formulario.motivo.trim()
         if (formulario.id == null) {
-            dao.insertar(CitaEntity(UUID.randomUUID().toString(), formulario.pacienteId,
-                fecha, hora, motivo, EstadoCita.PENDIENTE))
+            val nuevaCitaEntity = CitaEntity(
+                id = UUID.randomUUID().toString(),
+                pacienteId = formulario.pacienteId,
+                fecha = fecha,
+                hora = hora,
+                motivo = motivo,
+                estado = EstadoCita.PENDIENTE
+            )
+
+            dao.insertar(nuevaCitaEntity)
+
+            // Programar alarma para la nueva cita
+            Recordatorio.programarAlarmaCita(context, nuevaCitaEntity)
+
         } else {
             check(dao.editarPendiente(formulario.id, formulario.pacienteId, fecha, hora, motivo) == 1) {
                 "La cita ya no está pendiente o fue eliminada."
@@ -50,4 +64,4 @@ class CitaRepository(database: AppDatabase) {
     }
 }
 
-private fun CitaEntity.toDominio() = Cita(id, pacienteId, fecha, hora, motivo, estado)
+private fun CitaEntity.toDominio() = Cita(id, pacienteId, fecha, hora, motivo, estado, notificado)

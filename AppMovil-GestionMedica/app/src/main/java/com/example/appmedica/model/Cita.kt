@@ -15,7 +15,8 @@ data class Cita(
     val fecha: String,
     val hora: String,
     val motivo: String,
-    val estado: EstadoCita = EstadoCita.PENDIENTE
+    val estado: EstadoCita = EstadoCita.PENDIENTE,
+    val notificado: Boolean = false
 )
 
 data class FormularioCita(
