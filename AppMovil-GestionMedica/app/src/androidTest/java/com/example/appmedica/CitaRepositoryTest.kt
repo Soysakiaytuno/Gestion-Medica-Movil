@@ -5,6 +5,7 @@ import androidx.room.Room
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.example.appmedica.data.local.AppDatabase
+import com.example.appmedica.data.local.CitaEntity
 import com.example.appmedica.model.*
 import com.example.appmedica.repository.CitaRepository
 import com.example.appmedica.repository.PacienteRepository
@@ -25,9 +26,21 @@ class CitaRepositoryTest {
     private val contexto get() = InstrumentationRegistry.getInstrumentation().targetContext
     private fun abrir(archivo: String) = Room.databaseBuilder(contexto, AppDatabase::class.java, archivo)
         .addMigrations(AppDatabase.MIGRATION_1_2).build()
-    private fun paciente() = Paciente(id = "demo", nombre = "Paciente", apellidoPaterno = "Demo",
-        apellidoMaterno = "Prueba", ci = "12345678", email = "demo@example.com", celular = "70012345",
-        diagnosticos = emptyList(), fechaNacimiento = LocalDate.of(2000, 1, 1))
+    private fun paciente(
+        id: String = "demo",
+        ci: String = "12345678",
+        email: String = "demo@example.com"
+    ) = Paciente(
+        id = id,
+        nombre = "Paciente",
+        apellidoPaterno = "Demo",
+        apellidoMaterno = "Prueba",
+        ci = ci,
+        email = email,
+        celular = "70012345",
+        diagnosticos = emptyList(),
+        fechaNacimiento = LocalDate.of(2000, 1, 1)
+    )
 
     @Test fun crudRespuestasReactividadYPersistencia() = runBlocking {
         val archivo = "citas-${UUID.randomUUID()}.db"
@@ -132,6 +145,95 @@ class CitaRepositoryTest {
             }
             citas.eliminar(cita.id, RolUsuario.MEDICO)
             assertTrue(pacientes.eliminar("demo"))
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun observarProximaSinFiltroDevuelveLaMasTempranaNoRechazadaYExcluyePasadasYRechazadas() = runBlocking {
+        val db = Room.inMemoryDatabaseBuilder(contexto, AppDatabase::class.java).build()
+        try {
+            val pacientes = PacienteRepository(db)
+            val citas = CitaRepository(db)
+            pacientes.registrar(paciente(id = "pac-a", ci = "10000001", email = "paca@example.com"))
+            pacientes.registrar(paciente(id = "pac-b", ci = "10000002", email = "pacb@example.com"))
+
+            val ayer = LocalDate.now().minusDays(1).toString()
+            val manana = LocalDate.now().plusDays(1).toString()
+            val pasadoManana = LocalDate.now().plusDays(2).toString()
+
+            // Citas pasadas y cita futura pre-rechazada insertadas directo al DAO.
+            db.citaDao().insertar(CitaEntity("pasada-pend", "pac-a", ayer, "10:00", "Pasada pendiente", EstadoCita.PENDIENTE))
+            db.citaDao().insertar(CitaEntity("pasada-acep", "pac-b", ayer, "11:00", "Pasada aceptada", EstadoCita.ACEPTADA))
+            db.citaDao().insertar(CitaEntity("futura-rech", "pac-a", manana, "08:00", "Futura rechazada", EstadoCita.RECHAZADA))
+
+            citas.guardar(FormularioCita(pacienteId = "pac-a", fecha = manana, hora = "09:00", motivo = "Control A temprano"), RolUsuario.MEDICO)
+            citas.guardar(FormularioCita(pacienteId = "pac-b", fecha = manana, hora = "10:00", motivo = "Control B siguiente"), RolUsuario.MEDICO)
+            citas.guardar(FormularioCita(pacienteId = "pac-a", fecha = pasadoManana, hora = "11:00", motivo = "Control A posterior"), RolUsuario.MEDICO)
+
+            val todas = citas.citas.first()
+            val citaATemprana = todas.first { it.motivo == "Control A temprano" }
+            val citaBSiguiente = todas.first { it.motivo == "Control B siguiente" }
+            citas.responder(citaBSiguiente.id, "pac-b", EstadoCita.ACEPTADA, RolUsuario.PACIENTE)
+
+            val emisiones = Channel<Cita?>(Channel.UNLIMITED)
+            val observador = launch { citas.observarProxima(pacienteId = null).collect { emisiones.send(it) } }
+            try {
+                val primera = withTimeout(5_000) { emisiones.receive() }
+                assertEquals(citaATemprana.id, primera?.id)
+                assertEquals("Control A temprano", primera?.motivo)
+
+                // Al rechazar la cita más temprana, el flujo reactivo avanza a la siguiente válida.
+                citas.responder(citaATemprana.id, "pac-a", EstadoCita.RECHAZADA, RolUsuario.PACIENTE)
+                var siguiente = withTimeout(5_000) { emisiones.receive() }
+                while (siguiente?.id == citaATemprana.id) {
+                    siguiente = withTimeout(5_000) { emisiones.receive() }
+                }
+                assertEquals(citaBSiguiente.id, siguiente?.id)
+                assertEquals("pac-b", siguiente?.pacienteId)
+                assertEquals("Control B siguiente", siguiente?.motivo)
+            } finally {
+                observador.cancel()
+            }
+        } finally {
+            db.close()
+        }
+    }
+
+    @Test fun observarProximaPorPacienteAislaResultadosYDevuelveNullSinProximasValidas() = runBlocking {
+        val db = Room.inMemoryDatabaseBuilder(contexto, AppDatabase::class.java).build()
+        try {
+            val pacientes = PacienteRepository(db)
+            val citas = CitaRepository(db)
+            pacientes.registrar(paciente(id = "pac-a", ci = "20000001", email = "a@example.com"))
+            pacientes.registrar(paciente(id = "pac-b", ci = "20000002", email = "b@example.com"))
+
+            val ayer = LocalDate.now().minusDays(1).toString()
+            val manana = LocalDate.now().plusDays(1).toString()
+
+            // Cita de pac-b más temprana que cualquier cita de pac-a.
+            citas.guardar(FormularioCita(pacienteId = "pac-b", fecha = manana, hora = "08:30", motivo = "Control B temprano"), RolUsuario.MEDICO)
+            val citaB = citas.citas.first().first { it.pacienteId == "pac-b" }
+            citas.responder(citaB.id, "pac-b", EstadoCita.ACEPTADA, RolUsuario.PACIENTE)
+
+            // Citas de pac-a: pasada aceptada, futura rechazada y futura pendiente posterior.
+            db.citaDao().insertar(CitaEntity("a-pasada", "pac-a", ayer, "10:00", "Pasada A", EstadoCita.ACEPTADA))
+            db.citaDao().insertar(CitaEntity("a-rechazada", "pac-a", manana, "09:00", "Rechazada A", EstadoCita.RECHAZADA))
+            citas.guardar(FormularioCita(pacienteId = "pac-a", fecha = manana, hora = "11:00", motivo = "Control A"), RolUsuario.MEDICO)
+            val controlA = citas.citas.first().first { it.motivo == "Control A" }
+
+            val proximaA = citas.observarProxima("pac-a").first()
+            assertEquals(controlA.id, proximaA?.id)
+            assertEquals("pac-a", proximaA?.pacienteId)
+            assertEquals("Control A", proximaA?.motivo)
+
+            // Fail-closed para pacienteId en blanco.
+            assertNull(citas.observarProxima("").first())
+
+            // Tras rechazar la única cita futura válida de pac-a, su próxima es null aunque pac-b tenga cita futura.
+            citas.responder(controlA.id, "pac-a", EstadoCita.RECHAZADA, RolUsuario.PACIENTE)
+            assertNull(citas.observarProxima("pac-a").first())
+            assertEquals("pac-b", citas.observarProxima(pacienteId = null).first()?.pacienteId)
         } finally {
             db.close()
         }
