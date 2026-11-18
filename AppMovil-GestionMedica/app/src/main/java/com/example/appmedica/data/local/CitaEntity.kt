@@ -20,5 +20,6 @@ data class CitaEntity(
     val fecha: String,
     val hora: String,
     val motivo: String,
-    val estado: EstadoCita
+    val estado: EstadoCita,
+    val notificado: Boolean = false
 )
