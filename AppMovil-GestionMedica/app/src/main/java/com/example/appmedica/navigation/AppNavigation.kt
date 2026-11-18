@@ -12,6 +12,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.appmedica.data.remote.RetrofitClient
+import com.example.appmedica.model.PerfilUsuario
 import com.example.appmedica.repository.CatalogoMedicamentosRepository
 import com.example.appmedica.repository.PacienteRepository
 import com.example.appmedica.ui.screens.BuscarPacienteScreen
@@ -38,9 +39,12 @@ private const val PACIENTE_ID = "pacienteId"
 private const val CATALOGO_MEDICAMENTOS = "catalogo_medicamentos"
 
 @Composable
-fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepository) {
+fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepository, perfil: PerfilUsuario) {
     val navController = rememberNavController()
-    val agenda: CitasViewModel = viewModel { CitasViewModel(citasRepository, repository) }
+    // La clave con el uid crea una agenda nueva por cada usuario que inicia sesión
+    val agenda: CitasViewModel = viewModel(key = "citas-${perfil.uid}") {
+        CitasViewModel(citasRepository, repository, perfil)
+    }
     val datosAgenda by agenda.datos.collectAsStateWithLifecycle()
     val estadoAgenda by agenda.estado.collectAsStateWithLifecycle()
     val volver: () -> Unit = { navController.popBackStack() }

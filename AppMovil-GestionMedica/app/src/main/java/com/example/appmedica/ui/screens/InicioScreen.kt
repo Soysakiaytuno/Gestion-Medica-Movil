@@ -124,7 +124,7 @@ fun InicioScreen(
             TextField(
                 value = query,
                 onValueChange = onQueryChange,
-                placeholder = { Text(text = "Buscar por nombre", color = AzulMedio) },
+                placeholder = { Text(text = "Buscar nombre", color = AzulMedio) },
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Outlined.Search,

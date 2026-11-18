@@ -78,7 +78,7 @@ class MainActivity : ComponentActivity() {
                                     Box(
                                         modifier = Modifier.weight(1f)
                                     ) {
-                                        AppNavigation(pacientes, citas)
+                                        AppNavigation(pacientes, citas, estado.sesion.perfil)
                                     }
                                 }
                             }

@@ -39,24 +39,25 @@ abstract class AppDatabase : RoomDatabase() {
                 AppDatabase::class.java,
                 "appmedica.db"
             ).addMigrations(MIGRATION_1_2)
-                .addCallback(PacienteDemostracion)
+                .addCallback(PacienteInicial)
                 .build()
                 .also { instancia = it }
         }
     }
 }
 
-private object PacienteDemostracion : RoomDatabase.Callback() {
+// Paciente precargado: su id debe coincidir con el pacienteId de su perfil en Firestore
+private object PacienteInicial : RoomDatabase.Callback() {
     override fun onCreate(db: SupportSQLiteDatabase) {
         val diagnosticos = listOf(
             Diagnostico(
-                id = "diagnostico-demo-01",
+                id = "diagnostico-josue-01",
                 fecha = "04/10/2026",
                 titulo = "Asma",
                 descripcion = "El paciente presenta Tos insistente\n\nla enfermedad es tos\n\nse le receta tal cosa\n\nporque desinflama el pulmon"
             ),
             Diagnostico(
-                id = "diagnostico-demo-02",
+                id = "diagnostico-josue-02",
                 fecha = "18/08/2026",
                 titulo = "Bronquitis Aguda",
                 descripcion = "El paciente acude por dificultad respiratoria leve\n\nse detecta inflamación bronquial\n\nse receta inhalador cada 8 horas"

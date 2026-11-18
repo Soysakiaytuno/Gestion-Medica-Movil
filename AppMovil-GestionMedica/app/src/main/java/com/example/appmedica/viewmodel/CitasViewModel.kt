@@ -7,7 +7,8 @@ import com.example.appmedica.model.Cita
 import com.example.appmedica.model.EstadoCita
 import com.example.appmedica.model.FormularioCita
 import com.example.appmedica.model.Paciente
-import com.example.appmedica.model.RolDemo
+import com.example.appmedica.model.PerfilUsuario
+import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.repository.CitaRepository
 import com.example.appmedica.repository.PacienteRepository
 import kotlinx.coroutines.CancellationException
@@ -36,15 +37,15 @@ data class AgendaDatos(
 data class ConsultaAgenda(val estado: EstadoCita?, val pacienteId: String?)
 
 data class CitasEstado(
-    val rol: RolDemo = RolDemo.MEDICO,
-    val pacienteDemoId: String = "",
+    val rol: RolUsuario,
+    val pacienteId: String? = null,
     val formulario: FormularioCita = FormularioCita(),
     val ocupado: Boolean = false,
     val error: String = "",
     val filtro: EstadoCita? = null
 ) {
     val consulta: ConsultaAgenda
-        get() = ConsultaAgenda(filtro, pacienteDemoId.takeIf { rol == RolDemo.PACIENTE })
+        get() = ConsultaAgenda(filtro, pacienteId.takeIf { rol == RolUsuario.PACIENTE })
 }
 
 data class DetalleCitaDatos(
@@ -69,9 +70,11 @@ data class ResumenProxima(
 
 class CitasViewModel(
     private val repository: CitaRepository,
-    pacientes: PacienteRepository
+    pacientes: PacienteRepository,
+    perfil: PerfilUsuario
 ) : ViewModel() {
-    private val mutableEstado = MutableStateFlow(CitasEstado())
+    // El rol y el paciente vienen de la sesión de Firebase y no cambian durante la sesión
+    private val mutableEstado = MutableStateFlow(CitasEstado(rol = perfil.rol, pacienteId = perfil.pacienteId))
     val estado = mutableEstado.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -121,14 +124,6 @@ class CitasViewModel(
             emit(DetalleCitaDatos(cargando = false, error = "No se pudo cargar la cita."))
         }
 
-    fun seleccionarRol(rol: RolDemo) {
-        if (!estado.value.ocupado) mutableEstado.update { it.copy(rol = rol, error = "") }
-    }
-
-    fun seleccionarPaciente(id: String) {
-        if (!estado.value.ocupado) mutableEstado.update { it.copy(pacienteDemoId = id, error = "") }
-    }
-
     fun prepararFormulario(cita: Cita? = null) {
         mutableEstado.update { it.copy(error = "", formulario = cita?.let { c ->
             FormularioCita(c.id, c.pacienteId, c.fecha, c.hora, c.motivo)
@@ -148,7 +143,8 @@ class CitasViewModel(
 
     fun responder(id: String, respuesta: EstadoCita) {
         val actual = estado.value
-        ejecutar { repository.responder(id, actual.pacienteDemoId, respuesta, actual.rol) }
+        val pacienteId = actual.pacienteId ?: return
+        ejecutar { repository.responder(id, pacienteId, respuesta, actual.rol) }
     }
 
     fun eliminar(id: String, alEliminar: () -> Unit) {

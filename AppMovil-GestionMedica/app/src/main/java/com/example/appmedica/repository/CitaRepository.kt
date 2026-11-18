@@ -5,7 +5,7 @@ import com.example.appmedica.data.local.CitaEntity
 import com.example.appmedica.model.Cita
 import com.example.appmedica.model.EstadoCita
 import com.example.appmedica.model.FormularioCita
-import com.example.appmedica.model.RolDemo
+import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.model.validarCita
 import java.util.UUID
 import kotlinx.coroutines.flow.map
@@ -20,8 +20,8 @@ class CitaRepository(database: AppDatabase) {
 
     fun observarProxima() = dao.observarProxima().map { it?.toDominio() }
 
-    suspend fun guardar(formulario: FormularioCita, rol: RolDemo) {
-        require(rol == RolDemo.MEDICO) { "Solo el médico demo puede guardar citas." }
+    suspend fun guardar(formulario: FormularioCita, rol: RolUsuario) {
+        require(rol == RolUsuario.MEDICO) { "Solo el médico puede guardar citas." }
         validarCita(formulario)?.let { throw IllegalArgumentException(it) }
         val fecha = formulario.fecha.trim()
         val hora = formulario.hora.trim()
@@ -36,16 +36,16 @@ class CitaRepository(database: AppDatabase) {
         }
     }
 
-    suspend fun responder(id: String, pacienteId: String, estado: EstadoCita, rol: RolDemo) {
-        require(rol == RolDemo.PACIENTE) { "Selecciona el rol paciente demo para responder." }
+    suspend fun responder(id: String, pacienteId: String, estado: EstadoCita, rol: RolUsuario) {
+        require(rol == RolUsuario.PACIENTE) { "Solo el paciente puede responder sus citas." }
         require(estado == EstadoCita.ACEPTADA || estado == EstadoCita.RECHAZADA) { "Respuesta inválida." }
         check(dao.responderPendiente(id, pacienteId, estado) == 1) {
             "La cita no pertenece a este paciente, ya fue respondida o fue eliminada."
         }
     }
 
-    suspend fun eliminar(id: String, rol: RolDemo) {
-        require(rol == RolDemo.MEDICO) { "Solo el médico demo puede eliminar citas." }
+    suspend fun eliminar(id: String, rol: RolUsuario) {
+        require(rol == RolUsuario.MEDICO) { "Solo el médico puede eliminar citas." }
         check(dao.eliminar(id) == 1) { "La cita ya fue eliminada." }
     }
 }

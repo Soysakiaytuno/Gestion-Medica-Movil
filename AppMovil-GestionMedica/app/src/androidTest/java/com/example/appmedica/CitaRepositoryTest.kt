@@ -36,35 +36,35 @@ class CitaRepositoryTest {
             PacienteRepository(db).registrar(paciente())
             val repo = CitaRepository(db)
             val f = FormularioCita(pacienteId = "demo", fecha = LocalDate.now().plusDays(2).toString(), hora = "10:00", motivo = "Control")
-            falla { repo.guardar(f.copy(hora = "25:00"), RolDemo.MEDICO) }
-            falla { repo.guardar(f, RolDemo.PACIENTE) }
+            falla { repo.guardar(f.copy(hora = "25:00"), RolUsuario.MEDICO) }
+            falla { repo.guardar(f, RolUsuario.PACIENTE) }
             assertTrue(repo.citas.first().isEmpty())
-            repo.guardar(f, RolDemo.MEDICO)
+            repo.guardar(f, RolUsuario.MEDICO)
             val cita = repo.citas.first().single()
-            repo.guardar(f.copy(id = cita.id, motivo = "Control editado"), RolDemo.MEDICO)
+            repo.guardar(f.copy(id = cita.id, motivo = "Control editado"), RolUsuario.MEDICO)
             assertEquals("Control editado", repo.observarCita(cita.id).first()!!.motivo)
-            falla { repo.responder(cita.id, "otro", EstadoCita.ACEPTADA, RolDemo.PACIENTE) }
-            falla { repo.responder(cita.id, "demo", EstadoCita.ACEPTADA, RolDemo.MEDICO) }
-            falla { repo.responder(cita.id, "demo", EstadoCita.PENDIENTE, RolDemo.PACIENTE) }
+            falla { repo.responder(cita.id, "otro", EstadoCita.ACEPTADA, RolUsuario.PACIENTE) }
+            falla { repo.responder(cita.id, "demo", EstadoCita.ACEPTADA, RolUsuario.MEDICO) }
+            falla { repo.responder(cita.id, "demo", EstadoCita.PENDIENTE, RolUsuario.PACIENTE) }
             val emisiones = Channel<List<Cita>>(Channel.UNLIMITED)
             val observador = launch { repo.citas.collect { emisiones.send(it) } }
             try {
                 withTimeout(5_000) { assertEquals(EstadoCita.PENDIENTE, emisiones.receive().single().estado) }
-                repo.responder(cita.id, "demo", EstadoCita.ACEPTADA, RolDemo.PACIENTE)
+                repo.responder(cita.id, "demo", EstadoCita.ACEPTADA, RolUsuario.PACIENTE)
                 withTimeout(5_000) { assertEquals(EstadoCita.ACEPTADA, emisiones.receive().single().estado) }
             } finally { observador.cancel() }
-            falla { repo.responder(cita.id, "demo", EstadoCita.RECHAZADA, RolDemo.PACIENTE) }
-            falla { repo.guardar(f.copy(id = cita.id), RolDemo.MEDICO) }
-            falla { repo.eliminar(cita.id, RolDemo.PACIENTE) }
-            repo.guardar(f.copy(motivo = "Segunda"), RolDemo.MEDICO)
+            falla { repo.responder(cita.id, "demo", EstadoCita.RECHAZADA, RolUsuario.PACIENTE) }
+            falla { repo.guardar(f.copy(id = cita.id), RolUsuario.MEDICO) }
+            falla { repo.eliminar(cita.id, RolUsuario.PACIENTE) }
+            repo.guardar(f.copy(motivo = "Segunda"), RolUsuario.MEDICO)
             val segunda = repo.citas.first().first { it.id != cita.id }
-            repo.responder(segunda.id, "demo", EstadoCita.RECHAZADA, RolDemo.PACIENTE)
+            repo.responder(segunda.id, "demo", EstadoCita.RECHAZADA, RolUsuario.PACIENTE)
             db.close()
             db = abrir(archivo)
             val reabierto = CitaRepository(db)
             assertEquals(EstadoCita.ACEPTADA, reabierto.observarCita(cita.id).first()!!.estado)
             assertEquals(EstadoCita.RECHAZADA, reabierto.observarCita(segunda.id).first()!!.estado)
-            reabierto.eliminar(cita.id, RolDemo.MEDICO)
+            reabierto.eliminar(cita.id, RolUsuario.MEDICO)
             assertNull(reabierto.observarCita(cita.id).first())
             assertEquals(1, reabierto.citas.first().size)
         } finally { db.close(); contexto.deleteDatabase(archivo) }
@@ -89,7 +89,7 @@ class CitaRepositoryTest {
                 assertEquals("Anterior", previo.apellidoPaterno)
                 assertEquals("Conservar", previo.diagnosticos.single().descripcion)
                 val repo = CitaRepository(db)
-                repo.guardar(FormularioCita(pacienteId = previo.id, fecha = LocalDate.now().plusDays(1).toString(), hora = "10:00", motivo = "Demo"), RolDemo.MEDICO)
+                repo.guardar(FormularioCita(pacienteId = previo.id, fecha = LocalDate.now().plusDays(1).toString(), hora = "10:00", motivo = "Demo"), RolUsuario.MEDICO)
                 assertEquals(previo.id, repo.citas.first().single().pacienteId)
             } finally { db.close() }
         } finally { contexto.deleteDatabase(archivo) }
@@ -109,19 +109,19 @@ class CitaRepositoryTest {
             )
             assertNull(pacientes.observarPaciente(idInexistente).first())
             assertNull(citas.observarCita(idInexistente).first())
-            falla { citas.guardar(formulario.copy(id = idInexistente), RolDemo.MEDICO) }
-            falla { citas.responder(idInexistente, "demo", EstadoCita.ACEPTADA, RolDemo.PACIENTE) }
-            falla { citas.eliminar(idInexistente, RolDemo.MEDICO) }
+            falla { citas.guardar(formulario.copy(id = idInexistente), RolUsuario.MEDICO) }
+            falla { citas.responder(idInexistente, "demo", EstadoCita.ACEPTADA, RolUsuario.PACIENTE) }
+            falla { citas.eliminar(idInexistente, RolUsuario.MEDICO) }
 
             try {
-                citas.guardar(formulario, RolDemo.MEDICO)
+                citas.guardar(formulario, RolUsuario.MEDICO)
                 fail("Room debía rechazar una cita con paciente inexistente")
             } catch (_: SQLiteConstraintException) {
                 assertTrue(citas.citas.first().isEmpty())
             }
 
             pacientes.registrar(paciente())
-            citas.guardar(formulario.copy(pacienteId = "demo"), RolDemo.MEDICO)
+            citas.guardar(formulario.copy(pacienteId = "demo"), RolUsuario.MEDICO)
             val cita = citas.citas.first().single()
             try {
                 pacientes.eliminar("demo")
@@ -130,7 +130,7 @@ class CitaRepositoryTest {
                 assertNotNull(pacientes.observarPaciente("demo").first())
                 assertEquals(cita, citas.observarCita(cita.id).first())
             }
-            citas.eliminar(cita.id, RolDemo.MEDICO)
+            citas.eliminar(cita.id, RolUsuario.MEDICO)
             assertTrue(pacientes.eliminar("demo"))
         } finally {
             db.close()

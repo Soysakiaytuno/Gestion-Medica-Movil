@@ -9,8 +9,6 @@ enum class EstadoCita(val etiqueta: String) {
     PENDIENTE("Pendiente"), ACEPTADA("Aceptada"), RECHAZADA("Rechazada")
 }
 
-enum class RolDemo { MEDICO, PACIENTE }
-
 data class Cita(
     val id: String,
     val pacienteId: String,
