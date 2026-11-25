@@ -1,0 +1,6 @@
+# Android Studio crea local.properties con el sdk.dir de cada computadora.
+# Agregar estas dos líneas a ese archivo sin borrar sdk.dir.
+# Sustituir los marcadores por la URL y clave PUBLICA compartidas por el equipo.
+# No se necesita una cuenta del panel de Supabase para usar la API.
+SUPABASE_URL=https://TU-PROYECTO.supabase.co
+SUPABASE_PUBLIC_KEY=TU_CLAVE_PUBLICA

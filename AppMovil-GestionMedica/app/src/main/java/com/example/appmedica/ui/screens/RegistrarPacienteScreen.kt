@@ -19,10 +19,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -90,7 +86,7 @@ fun RegistrarPacienteScreen(
 }
 
 @Composable
-fun FormularioPaciente(
+private fun FormularioPaciente(
     modifier: Modifier = Modifier,
     formulario: RegistroPacienteFormulario,
     mensajeError: String,
@@ -118,10 +114,10 @@ fun FormularioPaciente(
             CampoPersonalizado("Nombre:", formulario.nombre) { valor ->
                 onFormularioChange { it.copy(nombre = valor) }
             }
-            CampoPersonalizado("Apellido Paterno:", formulario.apellidoPaterno) { valor ->
+            CampoPersonalizado("Primer apellido:", formulario.apellidoPaterno) { valor ->
                 onFormularioChange { it.copy(apellidoPaterno = valor) }
             }
-            CampoPersonalizado("Apellido Materno:", formulario.apellidoMaterno) { valor ->
+            CampoPersonalizado("Segundo apellido (opcional):", formulario.apellidoMaterno) { valor ->
                 onFormularioChange { it.copy(apellidoMaterno = valor) }
             }
             CampoPersonalizado("CI (7 u 8 dígitos):", formulario.ci, KeyboardType.Number) { valor ->
@@ -186,7 +182,7 @@ fun FormularioPaciente(
 }
 
 @Composable
-fun CampoPersonalizado(
+private fun CampoPersonalizado(
     etiqueta: String,
     valor: String,
     tipoTeclado: KeyboardType = KeyboardType.Text,

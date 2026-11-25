@@ -25,7 +25,7 @@ class CatalogoMedicamentosScreenTest {
             )
         }
 
-        compose.onNodeWithText("Consultando openFDA…").assertIsDisplayed()
+        compose.onNodeWithText("Cargando medicamentos…").assertIsDisplayed()
         compose.onNodeWithText("Reintentar").assertDoesNotExist()
     }
 }

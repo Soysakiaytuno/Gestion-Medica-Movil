@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -5,6 +7,13 @@ plugins {
     // Habilita la configuración de Firebase en este módulo
     alias(libs.plugins.google.services)
 }
+
+val configuracionLocal = Properties().apply {
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+}
+fun configuracion(nombre: String): String = providers.gradleProperty(nombre).orNull
+    ?: configuracionLocal.getProperty(nombre, "")
+fun literalJava(valor: String) = "\"" + valor.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
 
 android {
     namespace = "com.example.appmedica"
@@ -18,6 +27,8 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+        buildConfigField("String", "SUPABASE_URL", literalJava(configuracion("SUPABASE_URL")))
+        buildConfigField("String", "SUPABASE_PUBLIC_KEY", literalJava(configuracion("SUPABASE_PUBLIC_KEY")))
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -36,6 +47,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 

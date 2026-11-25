@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.appmedica.model.Paciente
 import com.example.appmedica.repository.PacienteRepository
+import com.example.appmedica.repository.ErrorOperacion
 import com.example.appmedica.repository.ResultadoRegistroPaciente
 import java.time.LocalDate
 import java.time.format.DateTimeParseException
@@ -49,8 +50,14 @@ class RegistroViewModel(private val repository: PacienteRepository) : ViewModel(
                     ResultadoRegistroPaciente.CI_DUPLICADO -> mostrarError("Ya existe un paciente con ese CI.")
                     ResultadoRegistroPaciente.EMAIL_DUPLICADO -> mostrarError("Ya existe un paciente con ese email.")
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: ErrorOperacion) {
+                mostrarError(e.message ?: "No se pudo guardar el paciente.")
             } catch (_: SQLException) {
                 mostrarError("No se pudo guardar el paciente. Intenta nuevamente.")
+            } catch (_: Exception) {
+                mostrarError("No se pudo completar el registro. Actualiza antes de reintentar.")
             } finally {
                 estadoMutable.update { it.copy(guardando = false) }
             }
@@ -69,10 +76,10 @@ class RegistroViewModel(private val repository: PacienteRepository) : ViewModel(
 
         if (
             nombre.isBlank() || apellidoPaterno.isBlank() ||
-            apellidoMaterno.isBlank() || ciLimpio.isBlank() ||
+            ciLimpio.isBlank() ||
             fechaNacimiento.isBlank() || email.isBlank() || celularLimpio.isBlank()
         ) {
-            mostrarError("Todos los campos son obligatorios.")
+            mostrarError("Completa todos los campos obligatorios.")
         } else if (ciLimpio.length !in 7..8 || ciLimpio.any { it !in '0'..'9' }) {
             mostrarError("El CI debe tener 7 u 8 dígitos, sin signos ni espacios internos.")
         } else if (celularLimpio.length < 8 || celularLimpio.any { it !in '0'..'9' }) {

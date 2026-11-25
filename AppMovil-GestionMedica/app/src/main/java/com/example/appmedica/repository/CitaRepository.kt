@@ -1,21 +1,17 @@
 package com.example.appmedica.repository
 
-import android.content.Context
-import com.example.appmedica.data.local.AppDatabase
+import com.example.appmedica.data.remote.*
 import com.example.appmedica.data.local.CitaEntity
 import com.example.appmedica.model.Cita
 import com.example.appmedica.model.EstadoCita
 import com.example.appmedica.model.FormularioCita
 import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.model.validarCita
-import com.example.appmedica.utils.Recordatorio
-import java.util.UUID
 import kotlinx.coroutines.flow.map
 
-// Reglas del prototipo local. No sustituyen autorización en un servidor.
-class CitaRepository(database: AppDatabase, private val context: Context) {
-    private val dao = database.citaDao()
-    val citas = dao.observarTodas().map { lista -> lista.map { it.toDominio() } }
+// Las validaciones locales ayudan a la UI; el servidor comprueba los permisos y el estado.
+class CitaRepository(private val almacen: AlmacenMedico) {
+    private val dao = almacen.database.citaDao()
     fun observarCita(id: String) = dao.observarPorId(id).map { it?.toDominio() }
     fun observarAgenda(estado: EstadoCita?, pacienteId: String?) =
         dao.observarFiltradas(estado, pacienteId).map { lista -> lista.map { it.toDominio() } }
@@ -28,39 +24,21 @@ class CitaRepository(database: AppDatabase, private val context: Context) {
         val fecha = formulario.fecha.trim()
         val hora = formulario.hora.trim()
         val motivo = formulario.motivo.trim()
-        if (formulario.id == null) {
-            val nuevaCitaEntity = CitaEntity(
-                id = UUID.randomUUID().toString(),
-                pacienteId = formulario.pacienteId,
-                fecha = fecha,
-                hora = hora,
-                motivo = motivo,
-                estado = EstadoCita.PENDIENTE
-            )
-
-            dao.insertar(nuevaCitaEntity)
-
-            // Programar alarma para la nueva cita
-            Recordatorio.programarAlarmaCita(context, nuevaCitaEntity)
-
-        } else {
-            check(dao.editarPendiente(formulario.id, formulario.pacienteId, fecha, hora, motivo) == 1) {
-                "La cita ya no está pendiente o fue eliminada."
-            }
+        almacen.ejecutar {
+            guardarCita(it, GuardarCitaPeticion(formulario.id, formulario.pacienteId, fecha, hora, motivo))
         }
     }
 
-    suspend fun responder(id: String, pacienteId: String, estado: EstadoCita, rol: RolUsuario) {
+    suspend fun responder(id: String, estado: EstadoCita, rol: RolUsuario) {
         require(rol == RolUsuario.PACIENTE) { "Solo el paciente puede responder sus citas." }
         require(estado == EstadoCita.ACEPTADA || estado == EstadoCita.RECHAZADA) { "Respuesta inválida." }
-        check(dao.responderPendiente(id, pacienteId, estado) == 1) {
-            "La cita no pertenece a este paciente, ya fue respondida o fue eliminada."
-        }
+        // El pacienteId real se obtiene del perfil del servidor, nunca del cuerpo de la petición.
+        almacen.ejecutar { responderCita(it, ResponderCitaPeticion(id, estado)) }
     }
 
     suspend fun eliminar(id: String, rol: RolUsuario) {
         require(rol == RolUsuario.MEDICO) { "Solo el médico puede eliminar citas." }
-        check(dao.eliminar(id) == 1) { "La cita ya fue eliminada." }
+        almacen.ejecutar { eliminarCita(it, EliminarPeticion(id)) }
     }
 }
 
