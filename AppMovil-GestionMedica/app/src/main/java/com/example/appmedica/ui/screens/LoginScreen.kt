@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,7 +41,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -51,7 +55,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.appmedica.R
 import com.example.appmedica.ui.theme.LoginBordeCampo
+import com.example.appmedica.ui.theme.LoginBotonDeshabilitado
 import com.example.appmedica.ui.theme.LoginCampoFondo
+import com.example.appmedica.ui.theme.LoginErrorFondo
+import com.example.appmedica.ui.theme.LoginErrorTexto
 import com.example.appmedica.ui.theme.LoginFondo
 import com.example.appmedica.ui.theme.LoginIndicacion
 import com.example.appmedica.ui.theme.LoginMenta
@@ -199,13 +206,17 @@ fun LoginScreen(
                         .semantics { contentDescription = etiquetaContrasena }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 if (estado is EstadoAutenticacion.Error) {
                     Text(
                         text = estado.mensaje,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall
+                        modifier = Modifier.fillMaxWidth()
+                            .background(LoginErrorFondo, RoundedCornerShape(12.dp))
+                            .padding(16.dp)
+                            .semantics { liveRegion = LiveRegionMode.Polite },
+                        color = LoginErrorTexto,
+                        style = MaterialTheme.typography.bodyMedium
                     )
 
                     Spacer(modifier = Modifier.height(16.dp))
@@ -218,19 +229,40 @@ fun LoginScreen(
                     enabled = !cargando &&
                             correo.isNotBlank() &&
                             contrasena.isNotBlank(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                    shape = RoundedCornerShape(20.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = LoginPetroleo,
+                        contentColor = LoginCampoFondo,
+                        disabledContainerColor = if (cargando) LoginPetroleo
+                            else LoginBotonDeshabilitado,
+                        disabledContentColor = if (cargando) LoginCampoFondo
+                            else LoginTextoSecundario
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
+                    contentPadding = PaddingValues(horizontal = 24.dp, vertical = 16.dp)
                 ) {
                     if (cargando) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
+                            color = LoginCampoFondo,
                             strokeWidth = 2.dp
                         )
-                    } else {
-                        Text("Iniciar sesión")
+                        Spacer(modifier = Modifier.size(12.dp))
                     }
+                    Text(
+                        text = stringResource(
+                            if (cargando) R.string.login_iniciando_sesion
+                            else R.string.login_iniciar_sesion
+                        ),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center
+                    )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "Acceso para médicos y pacientes",
@@ -319,5 +351,24 @@ private fun DecoracionLogin(modifier: Modifier = Modifier) {
 private fun LoginIdentidadPreview() {
     MaterialTheme {
         LoginScreen(estado = EstadoAutenticacion.SinSesion, onIniciarSesion = { _, _ -> })
+    }
+}
+
+@Preview(name = "Login · cargando", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+private fun LoginCargandoPreview() {
+    MaterialTheme {
+        LoginScreen(estado = EstadoAutenticacion.Cargando, onIniciarSesion = { _, _ -> })
+    }
+}
+
+@Preview(name = "Login · error", widthDp = 360, heightDp = 800, showBackground = true)
+@Composable
+private fun LoginErrorPreview() {
+    MaterialTheme {
+        LoginScreen(
+            estado = EstadoAutenticacion.Error("Revisa tu correo y contraseña e inténtalo de nuevo."),
+            onIniciarSesion = { _, _ -> }
+        )
     }
 }

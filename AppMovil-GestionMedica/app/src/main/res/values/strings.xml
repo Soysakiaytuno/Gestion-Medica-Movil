@@ -9,4 +9,6 @@
     <string name="login_contrasena_indicacion">Ingresa tu contraseña</string>
     <string name="login_mostrar_contrasena">Mostrar contraseña</string>
     <string name="login_ocultar_contrasena">Ocultar contraseña</string>
+    <string name="login_iniciar_sesion">Iniciar sesión</string>
+    <string name="login_iniciando_sesion">Iniciando sesión…</string>
 </resources>
