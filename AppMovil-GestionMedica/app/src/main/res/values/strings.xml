@@ -3,4 +3,10 @@
     <string name="login_titulo">Gestión Médica</string>
     <string name="login_subtitulo">Inicia sesión para continuar</string>
     <string name="login_lema">Tu salud, mejor organizada</string>
+    <string name="login_correo">Correo electrónico</string>
+    <string name="login_contrasena">Contraseña</string>
+    <string name="login_correo_indicacion">Ingresa tu correo electrónico</string>
+    <string name="login_contrasena_indicacion">Ingresa tu contraseña</string>
+    <string name="login_mostrar_contrasena">Mostrar contraseña</string>
+    <string name="login_ocultar_contrasena">Ocultar contraseña</string>
 </resources>

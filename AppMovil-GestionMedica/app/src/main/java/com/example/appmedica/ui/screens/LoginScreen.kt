@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
@@ -22,8 +23,11 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,15 +39,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.appmedica.R
+import com.example.appmedica.ui.theme.LoginBordeCampo
+import com.example.appmedica.ui.theme.LoginCampoFondo
 import com.example.appmedica.ui.theme.LoginFondo
+import com.example.appmedica.ui.theme.LoginIndicacion
 import com.example.appmedica.ui.theme.LoginMenta
 import com.example.appmedica.ui.theme.LoginOndaAzul
 import com.example.appmedica.ui.theme.LoginOndaVerde
@@ -59,8 +69,32 @@ fun LoginScreen(
 ) {
     var correo by rememberSaveable { mutableStateOf("") }
     var contrasena by rememberSaveable { mutableStateOf("") }
+    var contrasenaVisible by rememberSaveable { mutableStateOf(false) }
 
     val cargando = estado is EstadoAutenticacion.Cargando
+    val etiquetaCorreo = stringResource(R.string.login_correo)
+    val etiquetaContrasena = stringResource(R.string.login_contrasena)
+    val coloresCampo = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = LoginTexto,
+        unfocusedTextColor = LoginTexto,
+        disabledTextColor = LoginTextoSecundario.copy(alpha = 0.6f),
+        focusedContainerColor = LoginCampoFondo,
+        unfocusedContainerColor = LoginCampoFondo,
+        disabledContainerColor = LoginCampoFondo,
+        focusedBorderColor = LoginPetroleo,
+        unfocusedBorderColor = LoginBordeCampo,
+        disabledBorderColor = LoginBordeCampo.copy(alpha = 0.65f),
+        focusedLeadingIconColor = LoginPetroleo,
+        unfocusedLeadingIconColor = LoginIndicacion,
+        disabledLeadingIconColor = LoginIndicacion.copy(alpha = 0.6f),
+        focusedTrailingIconColor = LoginPetroleo,
+        unfocusedTrailingIconColor = LoginIndicacion,
+        disabledTrailingIconColor = LoginIndicacion.copy(alpha = 0.6f),
+        focusedPlaceholderColor = LoginIndicacion,
+        unfocusedPlaceholderColor = LoginIndicacion,
+        disabledPlaceholderColor = LoginIndicacion.copy(alpha = 0.6f),
+        cursorColor = LoginPetroleo
+    )
 
     Box(Modifier.fillMaxSize().background(LoginFondo)) {
         DecoracionLogin(Modifier.matchParentSize())
@@ -82,33 +116,87 @@ fun LoginScreen(
 
                 Spacer(modifier = Modifier.height(28.dp))
 
+                Text(
+                    text = etiquetaCorreo,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = LoginTexto
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    label = { Text("Correo electrónico") },
+                    placeholder = { Text(stringResource(R.string.login_correo_indicacion)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_login_correo),
+                            contentDescription = null
+                        )
+                    },
                     singleLine = true,
                     enabled = !cargando,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = coloresCampo,
+                    textStyle = MaterialTheme.typography.bodyLarge,
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                        .semantics { contentDescription = etiquetaCorreo }
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(20.dp))
 
+                Text(
+                    text = etiquetaContrasena,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = LoginTexto
+                )
+                Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = contrasena,
                     onValueChange = { contrasena = it },
-                    label = { Text("Contraseña") },
+                    placeholder = { Text(stringResource(R.string.login_contrasena_indicacion)) },
+                    leadingIcon = {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_login_candado),
+                            contentDescription = null
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(
+                            onClick = { contrasenaVisible = !contrasenaVisible },
+                            enabled = !cargando
+                        ) {
+                            Icon(
+                                painter = painterResource(
+                                    if (contrasenaVisible) R.drawable.ic_login_ocultar
+                                    else R.drawable.ic_login_mostrar
+                                ),
+                                contentDescription = stringResource(
+                                    if (contrasenaVisible) R.string.login_ocultar_contrasena
+                                    else R.string.login_mostrar_contrasena
+                                )
+                            )
+                        }
+                    },
                     singleLine = true,
                     enabled = !cargando,
-                    visualTransformation = PasswordVisualTransformation(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = coloresCampo,
+                    textStyle = MaterialTheme.typography.bodyLarge,
+                    visualTransformation = if (contrasenaVisible) VisualTransformation.None
+                        else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
+                        .semantics { contentDescription = etiquetaContrasena }
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
