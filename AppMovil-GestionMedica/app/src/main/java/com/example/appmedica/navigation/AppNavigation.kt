@@ -28,8 +28,9 @@ import com.example.appmedica.model.PerfilUsuario
 import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.repository.CatalogoMedicamentosRepository
 import com.example.appmedica.repository.PacienteRepository
+import com.example.appmedica.ui.components.ContenidoActualizable
+import com.example.appmedica.viewmodel.CatalogoMedicamentosEstado
 import com.example.appmedica.ui.components.BotonVolver
-import com.example.appmedica.ui.screens.BuscarPacienteScreen
 import com.example.appmedica.ui.screens.CatalogoMedicamentosScreen
 import com.example.appmedica.ui.screens.HistorialMedicoScreen
 import com.example.appmedica.ui.screens.InicioPacienteScreen
@@ -53,14 +54,14 @@ import kotlinx.coroutines.flow.flowOf
 
 private const val INICIO = "inicio"
 private const val INICIO_PACIENTE = "inicio_paciente"
-private const val BUSCAR_PACIENTE = "buscar_paciente"
 private const val REGISTRAR_PACIENTE = "registrar_paciente"
 private const val HISTORIAL_MEDICO = "historial_medico"
 private const val PACIENTE_ID = "pacienteId"
 private const val CATALOGO_MEDICAMENTOS = "catalogo_medicamentos"
 
 @Composable
-fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepository, perfil: PerfilUsuario) {
+fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepository, perfil: PerfilUsuario,
+    actualizando: Boolean = false, onActualizar: () -> Unit = {}) {
     val navController = rememberNavController()
     val esPaciente = perfil.rol == RolUsuario.PACIENTE
     val esMedico = perfil.rol == RolUsuario.MEDICO
@@ -108,20 +109,22 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 val nombreSaludo = paciente?.nombre?.trim()?.takeIf { it.isNotBlank() }
                     ?: perfil.nombre.trim().ifBlank { "Paciente" }
 
-                InicioPacienteScreen(
-                    nombre = nombreSaludo,
-                    resumenCita = resumenProxima,
-                    totalDiagnosticos = diagnosticos.size,
-                    ultimoDiagnostico = diagnosticos.firstOrNull(),
-                    irMisCitas = { navController.navigate("citas") { launchSingleTop = true } },
-                    irMiHistorial = { pacienteId?.let(abrirHistorial) },
-                    irDetalleCita = { id ->
-                        if (id.isNotBlank()) {
-                            agenda.limpiarError()
-                            navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true }
+                ContenidoActualizable(actualizando, onActualizar) {
+                    InicioPacienteScreen(
+                        nombre = nombreSaludo,
+                        resumenCita = resumenProxima,
+                        totalDiagnosticos = diagnosticos.size,
+                        ultimoDiagnostico = diagnosticos.firstOrNull(),
+                        irMisCitas = { navController.navigate("citas") { launchSingleTop = true } },
+                        irMiHistorial = { pacienteId?.let(abrirHistorial) },
+                        irDetalleCita = { id ->
+                            if (id.isNotBlank()) {
+                                agenda.limpiarError()
+                                navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true }
+                            }
                         }
-                    }
-                )
+                    )
+                }
             }
         }
 
@@ -137,20 +140,22 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
                 val query by busqueda.query.collectAsStateWithLifecycle()
                 val pacientes by busqueda.pacientes.collectAsStateWithLifecycle()
-                InicioScreen(
-                    query = query,
-                    pacientes = pacientes,
-                    onQueryChange = busqueda::onQueryChange,
-                    irAgregarPaciente = registrar,
-                    irDetallesPaciente = abrirHistorial,
-                    irAgenda = { navController.navigate("citas") { launchSingleTop = true } },
-                    irCatalogo = { navController.navigate(CATALOGO_MEDICAMENTOS) { launchSingleTop = true } },
-                    irDetalleCita = { id ->
-                        agenda.limpiarError()
-                        navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true}
-                    },
-                    resumenCita = resumenProxima
-                )
+                ContenidoActualizable(actualizando, onActualizar) {
+                    InicioScreen(
+                        query = query,
+                        pacientes = pacientes,
+                        onQueryChange = busqueda::onQueryChange,
+                        irAgregarPaciente = registrar,
+                        irDetallesPaciente = abrirHistorial,
+                        irAgenda = { navController.navigate("citas") { launchSingleTop = true } },
+                        irCatalogo = { navController.navigate(CATALOGO_MEDICAMENTOS) { launchSingleTop = true } },
+                        irDetalleCita = { id ->
+                            agenda.limpiarError()
+                            navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true}
+                        },
+                        resumenCita = resumenProxima
+                    )
+                }
             }
         }
 
@@ -166,23 +171,27 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                     CatalogoMedicamentosViewModel(CatalogoMedicamentosRepository(RetrofitClient.apiService))
                 }
                 val estado by catalogo.estado.collectAsStateWithLifecycle()
-                CatalogoMedicamentosScreen(estado, reintentar = catalogo::cargar, volver = volver)
+                ContenidoActualizable(estado is CatalogoMedicamentosEstado.Loading, catalogo::cargar) {
+                    CatalogoMedicamentosScreen(estado, reintentar = catalogo::cargar, volver = volver)
+                }
             }
         }
 
         composable("citas") {
-            AgendaCitasScreen(datosAgenda, estadoAgenda,
-                onFiltro = agenda::seleccionarFiltro,
-                onNueva = {
-                    if (esMedico) {
-                        agenda.prepararFormulario()
-                        navController.navigate("formulario_cita") { launchSingleTop = true }
-                    }
-                },
-                onDetalle = { id ->
-                    agenda.limpiarError()
-                    navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true }
-                }, onVolver = volver)
+            ContenidoActualizable(actualizando, onActualizar) {
+                AgendaCitasScreen(datosAgenda, estadoAgenda,
+                    onFiltro = agenda::seleccionarFiltro,
+                    onNueva = {
+                        if (esMedico) {
+                            agenda.prepararFormulario()
+                            navController.navigate("formulario_cita") { launchSingleTop = true }
+                        }
+                    },
+                    onDetalle = { id ->
+                        agenda.limpiarError()
+                        navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true }
+                    }, onVolver = volver)
+            }
         }
         composable("formulario_cita") { entrada ->
             if (!esMedico) {
@@ -209,41 +218,21 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
             val id = entrada.arguments?.getString("citaId").orEmpty()
             val detalle by remember(agenda, id) { agenda.observarDetalle(id) }
                 .collectAsStateWithLifecycle(initialValue = DetalleCitaDatos())
-            DetalleCitaScreen(id, detalle, datosAgenda.pacientes, estadoAgenda,
-                onEditar = { cita ->
-                    if (esMedico) {
-                        agenda.prepararFormulario(cita)
-                        navController.navigate("formulario_cita") { launchSingleTop = true }
-                    }
-                },
-                onResponder = { agenda.responder(id, it) },
-                onEliminar = {
-                    if (esMedico) {
-                        agenda.eliminar(id) { if (navController.currentBackStackEntry == entrada) volver() }
-                    }
-                },
-                onVolver = volver)
-        }
-
-        composable(BUSCAR_PACIENTE) {
-            if (!esMedico) {
-                RutaRestringida(
-                    mensaje = "Esta sección es exclusiva para personal médico.",
-                    alRedirigir = redirigirAlInicio,
-                    onVolver = volver
-                )
-            } else {
-                val busqueda: BuscarPacienteViewModel = viewModel { BuscarPacienteViewModel(repository) }
-                val query by busqueda.query.collectAsStateWithLifecycle()
-                val pacientes by busqueda.pacientes.collectAsStateWithLifecycle()
-                BuscarPacienteScreen(
-                    query = query,
-                    pacientes = pacientes,
-                    onQueryChange = busqueda::onQueryChange,
-                    volver = volver,
-                    irAgregar = registrar,
-                    irDetalles = abrirHistorial
-                )
+            ContenidoActualizable(actualizando, onActualizar) {
+                DetalleCitaScreen(id, detalle, datosAgenda.pacientes, estadoAgenda,
+                    onEditar = { cita ->
+                        if (esMedico) {
+                            agenda.prepararFormulario(cita)
+                            navController.navigate("formulario_cita") { launchSingleTop = true }
+                        }
+                    },
+                    onResponder = { agenda.responder(id, it) },
+                    onEliminar = {
+                        if (esMedico) {
+                            agenda.eliminar(id) { if (navController.currentBackStackEntry == entrada) volver() }
+                        }
+                    },
+                    onVolver = volver)
             }
         }
 
@@ -304,7 +293,9 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                     HistorialViewModel(repository, solicitado)
                 }
                 val paciente by historial.paciente.collectAsStateWithLifecycle()
-                HistorialMedicoScreen(paciente = paciente, onVolver = volver)
+                ContenidoActualizable(actualizando, onActualizar) {
+                    HistorialMedicoScreen(paciente = paciente, onVolver = volver)
+                }
             }
         }
     }

@@ -111,7 +111,7 @@ private fun SesionMedica(perfil: PerfilUsuario, cerrarSesion: () -> Unit) {
                     color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
             Box(Modifier.weight(1f)) {
-                AppNavigation(sesion.pacientes, sesion.citas, perfil)
+                AppNavigation(sesion.pacientes, sesion.citas, perfil, sync.cargando, sesion::actualizar)
             }
         }
     }
