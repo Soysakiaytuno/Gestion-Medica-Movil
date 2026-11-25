@@ -10,10 +10,6 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import com.example.appmedica.MainActivity
 import com.example.appmedica.R
-import com.example.appmedica.data.local.AppDatabase
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 class ReceptorCita : BroadcastReceiver() {
 
@@ -55,16 +51,5 @@ class ReceptorCita : BroadcastReceiver() {
             .build()
 
         notificationManager.notify(citaId.hashCode(), notification)
-
-        // Marcar como notificado en la base de datos Room
-        val pendiente = goAsync()
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val database = AppDatabase.obtener(context)
-                database.citaDao().actualizarEstadoNotificacion(citaId, true)
-            } finally {
-                pendiente.finish()
-            }
-        }
     }
 }
