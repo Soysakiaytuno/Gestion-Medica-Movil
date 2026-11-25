@@ -1,6 +1,5 @@
 package com.example.appmedica.viewmodel
 
-import android.database.SQLException
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.appmedica.model.Cita
@@ -10,6 +9,7 @@ import com.example.appmedica.model.Paciente
 import com.example.appmedica.model.PerfilUsuario
 import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.repository.CitaRepository
+import com.example.appmedica.repository.ErrorOperacion
 import com.example.appmedica.repository.PacienteRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -174,8 +174,8 @@ class CitasViewModel(
 
     fun responder(id: String, respuesta: EstadoCita) {
         val actual = estado.value
-        val pacienteId = actual.pacienteId ?: return
-        ejecutar { repository.responder(id, pacienteId, respuesta, actual.rol) }
+        if (actual.pacienteId.isNullOrBlank()) return
+        ejecutar { repository.responder(id, respuesta, actual.rol) }
     }
 
     fun eliminar(id: String, alEliminar: () -> Unit) {
@@ -192,12 +192,12 @@ class CitasViewModel(
                 alTerminar()
             } catch (cancelacion: CancellationException) {
                 throw cancelacion
-            } catch (_: SQLException) {
-                mutableEstado.update { it.copy(error = "No se pudo guardar el cambio. Comprueba que el paciente siga registrado e intenta nuevamente.") }
             } catch (error: IllegalArgumentException) {
                 mutableEstado.update { it.copy(error = error.message ?: "Datos inválidos.") }
-            } catch (error: IllegalStateException) {
-                mutableEstado.update { it.copy(error = error.message ?: "La cita cambió. Vuelve a abrir su detalle.") }
+            } catch (error: ErrorOperacion) {
+                mutableEstado.update { it.copy(error = error.message ?: "No se pudo completar el cambio. Vuelve a intentarlo.") }
+            } catch (error: Exception) {
+                mutableEstado.update { it.copy(error = "No se pudo completar la operación. Actualiza los datos antes de reintentar.") }
             } finally {
                 mutableEstado.update { it.copy(ocupado = false) }
             }

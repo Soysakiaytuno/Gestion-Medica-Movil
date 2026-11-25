@@ -71,11 +71,6 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
     ) {
         CitasViewModel(citasRepository, repository, perfil)
     }
-    LaunchedEffect(perfil.uid, perfil.rol, perfil.pacienteId) {
-        if (esPaciente) {
-            repository.asegurarPacienteParaPerfil(perfil)
-        }
-    }
     val datosAgenda by agenda.datos.collectAsStateWithLifecycle()
     val estadoAgenda by agenda.estado.collectAsStateWithLifecycle()
     val volver: () -> Unit = { navController.popBackStack() }
