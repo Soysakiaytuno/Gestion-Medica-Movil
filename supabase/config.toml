@@ -1,0 +1,3 @@
+[functions.api-medica]
+# La sesión es de Firebase. El código de la función la comprueba contra Firestore.
+verify_jwt = false
