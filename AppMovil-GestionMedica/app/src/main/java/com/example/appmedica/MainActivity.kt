@@ -46,12 +46,29 @@ import com.example.appmedica.navigation.AppNavigation
 import com.example.appmedica.ui.screens.LoginScreen
 import com.example.appmedica.viewmodel.AuthViewModel
 import com.example.appmedica.viewmodel.EstadoAutenticacion
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import com.example.appmedica.model.EstadoCita
+import com.example.appmedica.utils.Recordatorio
 
 class MainActivity : ComponentActivity() {
+
+    private val pedirPermisoNotificaciones =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            pedirPermisoNotificaciones.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
 
         setContent {
             MaterialTheme {
@@ -104,6 +121,22 @@ private fun SesionMedica(perfil: PerfilUsuario, cerrarSesion: () -> Unit) {
         val sync by sesion.estado.collectAsStateWithLifecycle()
         // Carga inicial por sesión. Después se consulta al deslizar o guardar cambios.
         LaunchedEffect(sesion) { sesion.actualizar() }
+
+        LaunchedEffect(sesion) {
+            val pacienteId = perfil.pacienteId?.takeIf { it.isNotBlank() }
+            if (perfil.rol != RolUsuario.PACIENTE || pacienteId == null) return@LaunchedEffect
+            var anteriores = emptySet<String>()
+            sesion.citas.observarAgenda(null, pacienteId).collect { lista ->
+                val vigentes = lista.filter { it.estado != EstadoCita.RECHAZADA }
+                vigentes.forEach { Recordatorio.programarAlarmaCita(context, it) }
+                lista.filter { it.estado == EstadoCita.RECHAZADA }
+                    .forEach { Recordatorio.cancelarAlarmaCita(context, it.id) }
+                val ids = vigentes.map { it.id }.toSet()
+                (anteriores - ids).forEach { Recordatorio.cancelarAlarmaCita(context, it) } // citas eliminadas
+                anteriores = ids
+            }
+        }
+
         Column(Modifier.fillMaxSize()) {
             BarraSesion(if (perfil.rol == RolUsuario.MEDICO) "Área médica" else "Área del paciente", cerrarSesion)
             if (sync.error.isNotBlank()) {
