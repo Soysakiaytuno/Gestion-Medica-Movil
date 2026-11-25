@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 2,
-    "identityHash": "c33998b0c4abe63b532d4f4650ad1101",
+    "identityHash": "fd8f96057ee5799743491a88abc25eba",
     "entities": [
       {
         "tableName": "pacientes",
@@ -92,7 +92,7 @@
       },
       {
         "tableName": "citas",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `pacienteId` TEXT NOT NULL, `fecha` TEXT NOT NULL, `hora` TEXT NOT NULL, `motivo` TEXT NOT NULL, `estado` TEXT NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`pacienteId`) REFERENCES `pacientes`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `pacienteId` TEXT NOT NULL, `fecha` TEXT NOT NULL, `hora` TEXT NOT NULL, `motivo` TEXT NOT NULL, `estado` TEXT NOT NULL, `notificado` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`pacienteId`) REFERENCES `pacientes`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT )",
         "fields": [
           {
             "fieldPath": "id",
@@ -128,6 +128,12 @@
             "fieldPath": "estado",
             "columnName": "estado",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notificado",
+            "columnName": "notificado",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -165,7 +171,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c33998b0c4abe63b532d4f4650ad1101')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'fd8f96057ee5799743491a88abc25eba')"
     ]
   }
 }

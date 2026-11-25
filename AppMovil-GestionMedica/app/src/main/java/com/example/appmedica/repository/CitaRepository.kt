@@ -42,4 +42,4 @@ class CitaRepository(private val almacen: AlmacenMedico) {
     }
 }
 
-private fun CitaEntity.toDominio() = Cita(id, pacienteId, fecha, hora, motivo, estado)
+private fun CitaEntity.toDominio() = Cita(id, pacienteId, fecha, hora, motivo, estado, notificado)
