@@ -6,11 +6,18 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.example.appmedica.data.local.CitaEntity
+import com.example.appmedica.model.Cita
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
 object Recordatorio {
+
+    fun programarAlarmaCita(context: Context, cita: Cita) =
+        programarAlarmaCita(
+            context,
+            CitaEntity(cita.id, cita.pacienteId, cita.fecha, cita.hora, cita.motivo, cita.estado, cita.notificado)
+        )
 
     fun programarAlarmaCita(context: Context, cita: CitaEntity) {
         try {
@@ -41,23 +48,26 @@ object Recordatorio {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (controlador.canScheduleExactAlarms()) {
-                    controlador.setExactAndAllowWhileIdle(
-                        AlarmManager.RTC_WAKEUP,
-                        tiempoAlarma,
-                        intentoPendiente
-                    )
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !controlador.canScheduleExactAlarms()) {
+                // Sin permiso de alarma exacta: se usa una alarma aproximada (puede variar unos minutos)
+                controlador.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, tiempoAlarma, intentoPendiente)
             } else {
-                controlador.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    tiempoAlarma,
-                    intentoPendiente
-                )
+                controlador.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, tiempoAlarma, intentoPendiente)
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    fun cancelarAlarmaCita(context: Context, citaId: String) {
+        val controlador = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        val pendiente = PendingIntent.getBroadcast(
+            context,
+            citaId.hashCode(),
+            Intent(context, ReceptorCita::class.java),
+            PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE
+        ) ?: return
+        controlador.cancel(pendiente)
+        pendiente.cancel()
     }
 }
