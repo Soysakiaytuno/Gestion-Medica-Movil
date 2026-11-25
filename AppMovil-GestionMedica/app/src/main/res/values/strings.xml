@@ -11,4 +11,5 @@
     <string name="login_ocultar_contrasena">Ocultar contraseña</string>
     <string name="login_iniciar_sesion">Iniciar sesión</string>
     <string name="login_iniciando_sesion">Iniciando sesión…</string>
+    <string name="login_acceso_roles">Acceso para médicos y pacientes</string>
 </resources>

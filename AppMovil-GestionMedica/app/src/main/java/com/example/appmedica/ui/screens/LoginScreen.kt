@@ -6,20 +6,24 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -38,11 +42,16 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -51,6 +60,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.appmedica.R
@@ -78,7 +88,19 @@ fun LoginScreen(
     var contrasena by rememberSaveable { mutableStateOf("") }
     var contrasenaVisible by rememberSaveable { mutableStateOf(false) }
 
+    val focusManager = LocalFocusManager.current
+    val teclado = LocalSoftwareKeyboardController.current
     val cargando = estado is EstadoAutenticacion.Cargando
+    val puedeIniciarSesion = !cargando && correo.isNotBlank() && contrasena.isNotBlank()
+
+    fun iniciarSesion() {
+        if (puedeIniciarSesion) {
+            focusManager.clearFocus()
+            teclado?.hide()
+            onIniciarSesion(correo.trim(), contrasena)
+        }
+    }
+
     val etiquetaCorreo = stringResource(R.string.login_correo)
     val etiquetaContrasena = stringResource(R.string.login_contrasena)
     val coloresCampo = OutlinedTextFieldDefaults.colors(
@@ -103,7 +125,9 @@ fun LoginScreen(
         cursorColor = LoginPetroleo
     )
 
-    Box(Modifier.fillMaxSize().background(LoginFondo)) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(LoginFondo)) {
+        val compacto = maxHeight < 600.dp || WindowInsets.ime.getBottom(LocalDensity.current) > 0
+        val margenHorizontal = if (maxWidth < 360.dp) 16.dp else 24.dp
         DecoracionLogin(Modifier.matchParentSize())
         Column(
             modifier = Modifier
@@ -111,7 +135,7 @@ fun LoginScreen(
                 .safeDrawingPadding()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 32.dp),
+                .padding(horizontal = margenHorizontal, vertical = if (compacto) 16.dp else 32.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -119,9 +143,9 @@ fun LoginScreen(
                 modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                EncabezadoLogin()
+                EncabezadoLogin(compacto)
 
-                Spacer(modifier = Modifier.height(28.dp))
+                Spacer(modifier = Modifier.height(if (compacto) 20.dp else 28.dp))
 
                 Text(
                     text = etiquetaCorreo,
@@ -134,7 +158,13 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = correo,
                     onValueChange = { correo = it },
-                    placeholder = { Text(stringResource(R.string.login_correo_indicacion)) },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.login_correo_indicacion),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.ic_login_correo),
@@ -149,6 +179,9 @@ fun LoginScreen(
                     keyboardOptions = KeyboardOptions(
                         keyboardType = KeyboardType.Email,
                         imeAction = ImeAction.Next
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onNext = { focusManager.moveFocus(FocusDirection.Next) }
                     ),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                         .semantics { contentDescription = etiquetaCorreo }
@@ -167,7 +200,13 @@ fun LoginScreen(
                 OutlinedTextField(
                     value = contrasena,
                     onValueChange = { contrasena = it },
-                    placeholder = { Text(stringResource(R.string.login_contrasena_indicacion)) },
+                    placeholder = {
+                        Text(
+                            stringResource(R.string.login_contrasena_indicacion),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    },
                     leadingIcon = {
                         Icon(
                             painter = painterResource(R.drawable.ic_login_candado),
@@ -202,6 +241,7 @@ fun LoginScreen(
                         keyboardType = KeyboardType.Password,
                         imeAction = ImeAction.Done
                     ),
+                    keyboardActions = KeyboardActions(onDone = { iniciarSesion() }),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                         .semantics { contentDescription = etiquetaContrasena }
                 )
@@ -223,12 +263,8 @@ fun LoginScreen(
                 }
 
                 Button(
-                    onClick = {
-                        onIniciarSesion(correo.trim(), contrasena)
-                    },
-                    enabled = !cargando &&
-                            correo.isNotBlank() &&
-                            contrasena.isNotBlank(),
+                    onClick = { iniciarSesion() },
+                    enabled = puedeIniciarSesion,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                         .semantics { liveRegion = LiveRegionMode.Polite },
                     shape = RoundedCornerShape(20.dp),
@@ -265,8 +301,8 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Acceso para médicos y pacientes",
-                    style = MaterialTheme.typography.bodySmall,
+                    text = stringResource(R.string.login_acceso_roles),
+                    style = MaterialTheme.typography.bodyMedium,
                     color = LoginTextoSecundario,
                     textAlign = TextAlign.Center
                 )
@@ -276,21 +312,24 @@ fun LoginScreen(
 }
 
 @Composable
-private fun EncabezadoLogin() {
+private fun EncabezadoLogin(compacto: Boolean) {
     Box(
-        modifier = Modifier.size(96.dp).background(LoginOndaVerde, RoundedCornerShape(28.dp)),
+        modifier = Modifier.size(if (compacto) 64.dp else 96.dp)
+            .background(LoginOndaVerde, RoundedCornerShape(if (compacto) 20.dp else 28.dp)),
         contentAlignment = Alignment.Center
     ) {
         Image(
             painter = painterResource(R.drawable.ic_login_medico),
             contentDescription = null,
-            modifier = Modifier.size(64.dp)
+            modifier = Modifier.size(if (compacto) 48.dp else 64.dp)
         )
     }
-    Spacer(Modifier.height(20.dp))
+    Spacer(Modifier.height(if (compacto) 12.dp else 20.dp))
     Text(
         text = stringResource(R.string.login_titulo),
-        style = MaterialTheme.typography.headlineLarge,
+        modifier = Modifier.semantics { heading() },
+        style = if (compacto) MaterialTheme.typography.headlineMedium
+            else MaterialTheme.typography.headlineLarge,
         fontWeight = FontWeight.Bold,
         color = LoginTexto,
         textAlign = TextAlign.Center
@@ -302,7 +341,7 @@ private fun EncabezadoLogin() {
         color = LoginTextoSecundario,
         textAlign = TextAlign.Center
     )
-    Spacer(Modifier.height(24.dp))
+    Spacer(Modifier.height(if (compacto) 16.dp else 24.dp))
     Text(
         text = stringResource(R.string.login_lema),
         modifier = Modifier.background(LoginMenta, RoundedCornerShape(50))
@@ -347,6 +386,10 @@ private fun DecoracionLogin(modifier: Modifier = Modifier) {
 }
 
 @Preview(name = "Login · identidad médica", widthDp = 360, heightDp = 800, showBackground = true)
+@Preview(name = "Login · pantalla pequeña", widthDp = 320, heightDp = 568, showBackground = true)
+@Preview(name = "Login · horizontal", widthDp = 800, heightDp = 360, showBackground = true)
+@Preview(name = "Login · tableta", widthDp = 800, heightDp = 1280, showBackground = true)
+@Preview(name = "Login · texto ampliado", widthDp = 320, heightDp = 568, fontScale = 2f, showBackground = true)
 @Composable
 private fun LoginIdentidadPreview() {
     MaterialTheme {
