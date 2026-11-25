@@ -20,7 +20,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -92,7 +94,8 @@ private fun SesionMedica(perfil: PerfilUsuario, cerrarSesion: () -> Unit) {
         val sync by sesion.estado.collectAsStateWithLifecycle()
         // Carga inicial por sesión. Después se consulta al deslizar o guardar cambios.
         LaunchedEffect(sesion) { sesion.actualizar() }
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+
+        Column(Modifier.fillMaxSize().padding(WindowInsets.statusBars.asPaddingValues())) {
             if (sync.error.isNotBlank()) {
                 Text(sync.error, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
