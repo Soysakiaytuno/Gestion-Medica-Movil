@@ -30,7 +30,7 @@
         </activity>
 
         <receiver
-            android:name=".utils.CitaAlarmReceiver"
+            android:name=".utils.ReceptorCita"
             android:exported="false" />
     </application>
 
