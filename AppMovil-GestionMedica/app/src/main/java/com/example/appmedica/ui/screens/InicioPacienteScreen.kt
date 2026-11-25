@@ -67,6 +67,7 @@ fun InicioPacienteScreen(
     irMisCitas: () -> Unit,
     irMiHistorial: () -> Unit,
     irDetalleCita: (String) -> Unit,
+    irPerfil: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -81,7 +82,8 @@ fun InicioPacienteScreen(
             EncabezadoInicioPaciente(
                 nombre = nombre,
                 irMisCitas = irMisCitas,
-                irMiHistorial = irMiHistorial
+                irMiHistorial = irMiHistorial,
+                irPerfil = irPerfil
             )
         }
 
@@ -126,7 +128,8 @@ fun InicioPacienteScreen(
 private fun EncabezadoInicioPaciente(
     nombre: String,
     irMisCitas: () -> Unit,
-    irMiHistorial: () -> Unit
+    irMiHistorial: () -> Unit,
+    irPerfil: () -> Unit
 ) {
     val nombreSaludo = nombre.trim().ifEmpty { "Paciente" }
 
@@ -170,7 +173,8 @@ private fun EncabezadoInicioPaciente(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(AvatarInicio),
+                    .background(AvatarInicio)
+                    .clickable { irPerfil() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
