@@ -7,7 +7,6 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.appmedica.model.Cita
 import com.example.appmedica.model.EstadoCita
@@ -158,20 +157,18 @@ class CitasScreenTest {
 
         compose.onNodeWithText("Detalle de Cita").assertIsDisplayed()
         compose.onNodeWithText("Josue Balbontin Perez").assertIsDisplayed()
-        compose.onNodeWithText("Fecha: 2026-12-24").assertIsDisplayed()
-        compose.onNodeWithText("Hora: 09:30").assertIsDisplayed()
-        compose.onNodeWithText("Motivo: Control general").assertIsDisplayed()
-        compose.onNodeWithText("Estado: Pendiente").assertIsDisplayed()
+        compose.onNodeWithText("24/12/2026").assertIsDisplayed()
+        compose.onNodeWithText("09:30").assertIsDisplayed()
+        compose.onNodeWithText("Control general").assertIsDisplayed()
+        compose.onNodeWithText("Pendiente").assertIsDisplayed()
 
         compose.onNodeWithContentDescription("Editar cita").assertDoesNotExist()
         compose.onNodeWithContentDescription("Eliminar cita").assertDoesNotExist()
 
         compose.onNodeWithText("Aceptar cita")
-            .performScrollTo()
             .assertIsDisplayed()
             .performClick()
         compose.onNodeWithText("Rechazar cita")
-            .performScrollTo()
             .assertIsDisplayed()
             .performClick()
 
@@ -207,8 +204,26 @@ class CitasScreenTest {
         compose.onNodeWithText("Esta cita no te corresponde.").assertIsDisplayed()
         compose.onNodeWithText("Aceptar cita").assertDoesNotExist()
         compose.onNodeWithText("Rechazar cita").assertDoesNotExist()
-        compose.onNodeWithText("Motivo: Control general").assertDoesNotExist()
+        compose.onNodeWithText("Control general").assertDoesNotExist()
         compose.onNodeWithContentDescription("Editar cita").assertDoesNotExist()
         compose.onNodeWithContentDescription("Eliminar cita").assertDoesNotExist()
+    }
+
+    @Test
+    fun medicoNoEditaCitaRespondidaYConfirmaAntesDeEliminar() {
+        var eliminaciones = 0
+        val cita = Cita("aceptada", "pac-1", "2026-12-24", "09:30", "Control", EstadoCita.ACEPTADA)
+        compose.setContent {
+            DetalleCitaScreen(cita.id, DetalleCitaDatos(cita, cargando = false), listOf(pacientePrueba),
+                CitasEstado(RolUsuario.MEDICO), {}, {}, { eliminaciones++ }, {})
+        }
+        compose.onNodeWithContentDescription("Editar cita").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Eliminar cita").performClick()
+        assertEquals(0, eliminaciones)
+        compose.onNodeWithText("Conservar").performClick()
+        assertEquals(0, eliminaciones)
+        compose.onNodeWithContentDescription("Eliminar cita").performClick()
+        compose.onNodeWithText("Eliminar", substring = false).performClick()
+        assertEquals(1, eliminaciones)
     }
 }

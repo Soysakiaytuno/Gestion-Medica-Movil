@@ -2,6 +2,16 @@
 package com.example.appmedica
 
 import android.os.Bundle
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.compose.ui.platform.LocalContext
+import com.example.appmedica.model.PerfilUsuario
+import com.example.appmedica.viewmodel.SesionMedicaViewModel
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -31,11 +41,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.appmedica.data.local.AppDatabase
 import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.navigation.AppNavigation
-import com.example.appmedica.repository.CitaRepository
-import com.example.appmedica.repository.PacienteRepository
 import com.example.appmedica.ui.screens.LoginScreen
 import com.example.appmedica.viewmodel.AuthViewModel
 import com.example.appmedica.viewmodel.EstadoAutenticacion
@@ -45,10 +52,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-
-        val database = AppDatabase.obtener(applicationContext)
-        val pacientes = PacienteRepository(database)
-        val citas = CitaRepository(database)
 
         setContent {
             MaterialTheme {
@@ -64,45 +67,8 @@ class MainActivity : ComponentActivity() {
 
                     is EstadoAutenticacion.Autenticado -> {
 
-                        when (estado.sesion.perfil.rol) {
-
-                            RolUsuario.MEDICO -> {
-                                Column(
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-
-                                    BarraSesion(
-                                        titulo = "Área médica",
-                                        onCerrarSesion = authViewModel::cerrarSesion
-                                    )
-
-                                    Box(
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        AppNavigation(pacientes, citas, estado.sesion.perfil)
-                                    }
-                                }
-                            }
-
-                            RolUsuario.PACIENTE -> {
-                                Column(
-                                    modifier = Modifier.fillMaxSize()
-                                ) {
-
-                                    BarraSesion(
-                                        titulo = "Área del paciente",
-                                        onCerrarSesion = authViewModel::cerrarSesion
-                                    )
-
-                                    Box(
-                                        modifier = Modifier.weight(1f)
-                                    ) {
-                                        key(estado.sesion.perfil.uid, estado.sesion.perfil.rol, estado.sesion.perfil.pacienteId) {
-                                            AppNavigation(pacientes, citas, estado.sesion.perfil)
-                                        }
-                                    }
-                                }
-                            }
+                        key(estado.sesion.perfil) {
+                            SesionMedica(estado.sesion.perfil, authViewModel::cerrarSesion)
                         }
                     }
 
@@ -113,6 +79,39 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SesionMedica(perfil: PerfilUsuario, cerrarSesion: () -> Unit) {
+    val context = LocalContext.current
+    val owner = remember {
+        object : ViewModelStoreOwner {
+            override val viewModelStore = ViewModelStore()
+        }
+    }
+    DisposableEffect(owner) {
+        onDispose { owner.viewModelStore.clear() }
+    }
+    CompositionLocalProvider(
+        LocalViewModelStoreOwner provides owner
+    ) {
+        val sesion: SesionMedicaViewModel = viewModel {
+            SesionMedicaViewModel(context.applicationContext, perfil)
+        }
+        val sync by sesion.estado.collectAsStateWithLifecycle()
+        // Carga inicial por sesión. Después se consulta al deslizar o guardar cambios.
+        LaunchedEffect(sesion) { sesion.actualizar() }
+        Column(Modifier.fillMaxSize()) {
+            BarraSesion(if (perfil.rol == RolUsuario.MEDICO) "Área médica" else "Área del paciente", cerrarSesion)
+            if (sync.error.isNotBlank()) {
+                Text(sync.error, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            }
+            Box(Modifier.weight(1f)) {
+                AppNavigation(sesion.pacientes, sesion.citas, perfil, sync.cargando, sesion::actualizar)
             }
         }
     }

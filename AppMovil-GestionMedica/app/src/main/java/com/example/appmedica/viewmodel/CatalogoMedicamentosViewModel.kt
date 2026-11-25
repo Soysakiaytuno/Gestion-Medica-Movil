@@ -42,12 +42,12 @@ class CatalogoMedicamentosViewModel(
             } catch (error: Exception) {
                 val mensaje = when (error) {
                     is HttpException -> if (error.code() == 429) {
-                        "openFDA alcanzó su límite de consultas. Espera un momento y vuelve a intentar."
+                        "El catálogo está ocupado. Espera un momento y vuelve a intentarlo."
                     } else {
-                        "openFDA no pudo completar la consulta (HTTP ${error.code()})."
+                        "El catálogo no está disponible en este momento. Inténtalo más tarde."
                     }
-                    is JsonParseException, is MalformedJsonException -> "openFDA devolvió datos con un formato inesperado."
-                    is IOException -> "No se pudo conectar con openFDA. Comprueba tu conexión e inténtalo de nuevo."
+                    is JsonParseException, is MalformedJsonException -> "No se pudieron mostrar los medicamentos. Vuelve a intentarlo."
+                    is IOException -> "No se pudo cargar el catálogo. Revisa tu conexión y vuelve a intentarlo."
                     else -> "No se pudo cargar el catálogo de medicamentos."
                 }
                 CatalogoMedicamentosEstado.Error(mensaje)

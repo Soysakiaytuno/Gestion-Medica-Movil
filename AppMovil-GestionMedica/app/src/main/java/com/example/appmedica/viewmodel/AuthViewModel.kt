@@ -4,6 +4,11 @@ package com.example.appmedica.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.appmedica.model.SesionUsuario
+import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.example.appmedica.repository.ErrorOperacion
 import com.example.appmedica.repository.AuthRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -58,7 +63,14 @@ class AuthViewModel(
                 throw e
             } catch (e: Exception) {
                 _estado.value = EstadoAutenticacion.Error(
-                    mensaje = e.message ?: "No se pudo iniciar sesión"
+                    mensaje = when (e) {
+                        is FirebaseNetworkException -> "No hay conexión. Revisa tu internet y vuelve a intentarlo."
+                        is FirebaseTooManyRequestsException -> "Hubo demasiados intentos. Espera un momento y vuelve a intentarlo."
+                        is FirebaseAuthInvalidCredentialsException, is FirebaseAuthInvalidUserException ->
+                            "Revisa tu correo y contraseña e inténtalo de nuevo."
+                        is ErrorOperacion -> e.message ?: "Revisa los datos ingresados."
+                        else -> "No se pudo iniciar sesión. Vuelve a intentarlo; si el problema continúa, contacta al responsable."
+                    }
                 )
             }
         }

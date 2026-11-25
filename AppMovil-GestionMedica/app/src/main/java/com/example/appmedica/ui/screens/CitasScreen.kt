@@ -9,24 +9,20 @@ import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Alignment
-import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.ui.text.font.FontWeight
 import com.example.appmedica.model.*
 import com.example.appmedica.ui.components.BotonVolver
 import com.example.appmedica.ui.theme.*
 import com.example.appmedica.viewmodel.AgendaDatos
 import com.example.appmedica.viewmodel.CitasEstado
-import com.example.appmedica.viewmodel.DetalleCitaDatos
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun MarcoCitas(
+internal fun MarcoCitas(
     titulo: String,
     volver: () -> Unit,
     botones: (@Composable ColumnScope.() -> Unit)? = null,
@@ -61,7 +57,7 @@ private fun MarcoCitas(
     }
 }
 
-private fun nombrePaciente(p: Paciente, incluirMaterno: Boolean = false): String =
+internal fun nombrePaciente(p: Paciente, incluirMaterno: Boolean = false): String =
     listOfNotNull(p.nombre, p.apellidoPaterno, p.apellidoMaterno.takeIf { incluirMaterno })
         .map { it.trim() }
         .filter { it.isNotEmpty() }
@@ -127,7 +123,7 @@ private fun BuscadorPaciente(
 }
 
 @Composable
-private fun MensajeOperacion(estado: CitasEstado) {
+internal fun MensajeOperacion(estado: CitasEstado) {
     if (estado.ocupado) { LinearProgressIndicator(Modifier.fillMaxWidth()); Text("Guardando cambios…") }
     if (estado.error.isNotBlank()) Text(estado.error, color = TextoError)
 }
@@ -253,57 +249,5 @@ fun FormularioCitaScreen(
             OutlinedTextField(value = f.motivo, onValueChange = { onCambio(f.copy(motivo = it)) }, label = { Text("Motivo de la cita") }, minLines = 2, enabled = !estado.ocupado, modifier = Modifier.fillMaxWidth())
             MensajeOperacion(estado)
         }
-    }
-}
-
-@Composable
-fun DetalleCitaScreen(id: String, detalle: DetalleCitaDatos, pacientes: List<Paciente>, estado: CitasEstado, onEditar: (Cita) -> Unit, onResponder: (EstadoCita) -> Unit, onEliminar: () -> Unit, onVolver: () -> Unit) {
-    val cita = detalle.cita
-    var confirmar by rememberSaveable(id) { mutableStateOf(false) }
-    MarcoCitas("Detalle de Cita", onVolver) {
-        if (detalle.cargando) CircularProgressIndicator()
-        else if (detalle.error.isNotEmpty()) Text(detalle.error, color = TextoError)
-        else if (cita == null) Text("La cita ya no está disponible.")
-        else if (estado.rol == RolUsuario.PACIENTE && (estado.pacienteId.isNullOrBlank() || estado.pacienteId != cita.pacienteId)) {
-            Text("Esta cita no te corresponde.")
-        }
-        else {
-            if (estado.rol == RolUsuario.MEDICO) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
-                ) {
-                    FilledIconButton(
-                        onClick = { onEditar(cita) },
-                        enabled = !estado.ocupado && cita.estado == EstadoCita.PENDIENTE,
-                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = AzulOscuro, contentColor = FondoBlanco)
-                    ) { Icon(Icons.Outlined.Edit, contentDescription = "Editar cita") }
-                    FilledIconButton(
-                        onClick = { confirmar = true },
-                        enabled = !estado.ocupado,
-                        colors = IconButtonDefaults.filledIconButtonColors(containerColor = RojoEliminar, contentColor = FondoBlanco)
-                    ) { Icon(Icons.Outlined.Delete, contentDescription = "Eliminar cita") }
-                }
-            }
-            val paciente = pacientes.find { it.id == cita.pacienteId }
-            Text(paciente?.let { nombrePaciente(it, incluirMaterno = true) } ?: "Paciente", style = MaterialTheme.typography.titleLarge)
-            Text("Fecha: ${cita.fecha}")
-            Text("Hora: ${cita.hora}")
-            Text("Motivo: ${cita.motivo}")
-            Text("Estado: ${cita.estado.etiqueta}")
-            MensajeOperacion(estado)
-            if (estado.rol == RolUsuario.PACIENTE) {
-                if (cita.estado == EstadoCita.PENDIENTE) {
-                    Button(onClick = { onResponder(EstadoCita.ACEPTADA) }, enabled = !estado.ocupado) { Text("Aceptar cita") }
-                    OutlinedButton(onClick = { onResponder(EstadoCita.RECHAZADA) }, enabled = !estado.ocupado) { Text("Rechazar cita") }
-                } else Text("Tu respuesta ya fue registrada.")
-            }
-        }
-        if (confirmar && cita != null && estado.rol == RolUsuario.MEDICO) AlertDialog(
-            onDismissRequest = { confirmar = false }, title = { Text("¿Eliminar esta cita?") },
-            text = { Text("Se eliminará la cita de ${cita.fecha} a las ${cita.hora}. Esta acción no se puede deshacer.") },
-            confirmButton = { TextButton(onClick = { confirmar = false; onEliminar() }) { Text("Eliminar") } },
-            dismissButton = { TextButton(onClick = { confirmar = false }) { Text("Conservar") } }
-        )
     }
 }

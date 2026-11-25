@@ -65,7 +65,7 @@ fun CatalogoMedicamentosScreen(
             when (estado) {
                 CatalogoMedicamentosEstado.Loading -> item {
                     CircularProgressIndicator(color = AzulOscuro)
-                    Text("Consultando openFDA…", color = AzulPrincipal)
+                    Text("Cargando medicamentos…", color = AzulPrincipal)
                 }
                 is CatalogoMedicamentosEstado.Error -> item {
                     Text(estado.mensaje, color = TextoError)

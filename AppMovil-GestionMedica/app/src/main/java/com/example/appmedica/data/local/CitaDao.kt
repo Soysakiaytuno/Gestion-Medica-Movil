@@ -9,10 +9,10 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CitaDao {
     @Insert
-    suspend fun insertar(cita: CitaEntity)
+    suspend fun insertarTodas(citas: List<CitaEntity>)
 
-    @Query("SELECT * FROM citas ORDER BY fecha, hora, id")
-    fun observarTodas(): Flow<List<CitaEntity>>
+    @Query("DELETE FROM citas")
+    suspend fun vaciar()
 
     @Query("""
         SELECT * FROM citas
@@ -35,12 +35,4 @@ interface CitaDao {
     @Query("SELECT * FROM citas WHERE id = :id")
     fun observarPorId(id: String): Flow<CitaEntity?>
 
-    @Query("UPDATE citas SET pacienteId = :pacienteId, fecha = :fecha, hora = :hora, motivo = :motivo WHERE id = :id AND estado = 'PENDIENTE'")
-    suspend fun editarPendiente(id: String, pacienteId: String, fecha: String, hora: String, motivo: String): Int
-
-    @Query("UPDATE citas SET estado = :estado WHERE id = :id AND pacienteId = :pacienteId AND estado = 'PENDIENTE'")
-    suspend fun responderPendiente(id: String, pacienteId: String, estado: EstadoCita): Int
-
-    @Query("DELETE FROM citas WHERE id = :id")
-    suspend fun eliminar(id: String): Int
 }

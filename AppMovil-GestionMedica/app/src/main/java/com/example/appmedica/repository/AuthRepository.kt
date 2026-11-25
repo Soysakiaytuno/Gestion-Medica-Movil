@@ -1,7 +1,6 @@
 
 package com.example.appmedica.repository
 
-import com.example.appmedica.model.IdTokenInfo
 import com.example.appmedica.model.PerfilUsuario
 import com.example.appmedica.model.RolUsuario
 import com.example.appmedica.model.SesionUsuario
@@ -19,13 +18,8 @@ class AuthRepository(
         contrasena: String
     ): SesionUsuario {
 
-        require(correo.isNotBlank()) {
-            "El correo no puede estar vacío"
-        }
-
-        require(contrasena.isNotBlank()) {
-            "La contraseña no puede estar vacía"
-        }
+        if (correo.isBlank()) throw ErrorOperacion("Ingresa tu correo electrónico.")
+        if (contrasena.isBlank()) throw ErrorOperacion("Ingresa tu contraseña.")
 
         // 1. Autenticar las credenciales con Firebase
         val resultado = auth.signInWithEmailAndPassword(
@@ -35,7 +29,7 @@ class AuthRepository(
 
         try {
             val usuario = resultado.user
-                ?: error("No se pudo obtener el usuario autenticado")
+                ?: throw ErrorOperacion("No se pudo iniciar sesión. Vuelve a intentarlo.")
 
             // 2. Consultar el perfil utilizando el UID autenticado
             val documento = firestore.collection("perfiles")
@@ -43,34 +37,34 @@ class AuthRepository(
                 .get()
                 .await()
 
-            check(documento.exists()) {
-                "El usuario no tiene un perfil registrado"
+            if (!documento.exists()) {
+                throw ErrorOperacion("Tu cuenta aún no está habilitada. Contacta al responsable de la aplicación.")
             }
 
             // 3. Convertir el rol de Firestore a nuestro enum
             val rol = when (documento.getString("rol")) {
                 "MEDICO" -> RolUsuario.MEDICO
                 "PACIENTE" -> RolUsuario.PACIENTE
-                else -> error("El perfil tiene un rol inválido")
+                else -> throw ErrorOperacion("Tu cuenta necesita ser revisada antes de ingresar. Contacta al responsable.")
             }
 
-            check(documento.getBoolean("activo") == true) {
-                "El perfil está desactivado"
+            if (documento.getBoolean("activo") != true) {
+                throw ErrorOperacion("Tu cuenta está desactivada. Contacta al responsable de la aplicación.")
             }
 
             val nombre = documento.getString("nombre")
                 ?.takeIf { it.isNotBlank() }
-                ?: error("El perfil no tiene nombre")
+                ?: throw ErrorOperacion("Faltan datos de tu cuenta. Contacta al responsable para completarlos.")
 
             val correoPerfil = documento.getString("correo")
                 ?.takeIf { it.isNotBlank() }
-                ?: error("El perfil no tiene correo")
+                ?: throw ErrorOperacion("Faltan datos de tu cuenta. Contacta al responsable para completarlos.")
 
             val pacienteId = documento.getString("pacienteId")
                 ?.takeIf { it.isNotBlank() }
 
-            check(rol != RolUsuario.PACIENTE || pacienteId != null) {
-                "El paciente no tiene un identificador asociado"
+            if (rol == RolUsuario.PACIENTE && pacienteId == null) {
+                throw ErrorOperacion("Tu cuenta aún no está vinculada a una ficha de paciente. Contacta al responsable.")
             }
 
             // 4. Construir el perfil
@@ -101,16 +95,4 @@ class AuthRepository(
         auth.signOut()
     }
 
-    // 7. Consultar los metadatos del JWT
-    suspend fun obtenerInfoToken(): IdTokenInfo {
-        val usuario = auth.currentUser
-            ?: error("No hay una sesión iniciada")
-
-        val resultadoToken = usuario.getIdToken(false).await()
-
-        return IdTokenInfo(
-            emitidoEnSegundos = resultadoToken.issuedAtTimestamp,
-            expiraEnSegundos = resultadoToken.expirationTimestamp
-        )
-    }
 }
