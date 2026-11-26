@@ -35,6 +35,7 @@ import com.example.appmedica.ui.screens.CatalogoMedicamentosScreen
 import com.example.appmedica.ui.screens.HistorialMedicoScreen
 import com.example.appmedica.ui.screens.InicioPacienteScreen
 import com.example.appmedica.ui.screens.InicioScreen
+import com.example.appmedica.ui.screens.PerfilScreen
 import com.example.appmedica.ui.screens.RegistrarPacienteScreen
 import com.example.appmedica.ui.screens.TopBarHistorial
 import com.example.appmedica.ui.theme.AzulPrincipal
@@ -61,7 +62,7 @@ private const val CATALOGO_MEDICAMENTOS = "catalogo_medicamentos"
 
 @Composable
 fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepository, perfil: PerfilUsuario,
-    actualizando: Boolean = false, onActualizar: () -> Unit = {}) {
+    actualizando: Boolean = false, onActualizar: () -> Unit = {}, cerrarSesion: () -> Unit = {}) {
     val navController = rememberNavController()
     val esPaciente = perfil.rol == RolUsuario.PACIENTE
     val esMedico = perfil.rol == RolUsuario.MEDICO
@@ -117,6 +118,7 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                         ultimoDiagnostico = diagnosticos.firstOrNull(),
                         irMisCitas = { navController.navigate("citas") { launchSingleTop = true } },
                         irMiHistorial = { pacienteId?.let(abrirHistorial) },
+                        irPerfil = { navController.navigate("perfil") },
                         irDetalleCita = { id ->
                             if (id.isNotBlank()) {
                                 agenda.limpiarError()
@@ -142,6 +144,7 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                 val pacientes by busqueda.pacientes.collectAsStateWithLifecycle()
                 ContenidoActualizable(actualizando, onActualizar) {
                     InicioScreen(
+                        nombre = perfil.nombre,
                         query = query,
                         pacientes = pacientes,
                         onQueryChange = busqueda::onQueryChange,
@@ -153,6 +156,7 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                             agenda.limpiarError()
                             navController.navigate("cita/${Uri.encode(id)}") { launchSingleTop = true}
                         },
+                        irPerfil = { navController.navigate("perfil") },
                         resumenCita = resumenProxima
                     )
                 }
@@ -193,6 +197,18 @@ fun AppNavigation(repository: PacienteRepository, citasRepository: CitaRepositor
                     }, onVolver = volver)
             }
         }
+        composable("perfil") {
+            // Pantalla → ViewModel → Repository → DAO → Room (médico: pacienteId null, sin ficha)
+            val datosPaciente: HistorialViewModel = viewModel { HistorialViewModel(repository, perfil.pacienteId) }
+            val paciente by datosPaciente.paciente.collectAsStateWithLifecycle()
+            PerfilScreen(
+                perfil = perfil,
+                paciente = paciente,
+                cerrarSesion = cerrarSesion,
+                volver = volver
+            )
+        }
+
         composable("formulario_cita") { entrada ->
             if (!esMedico) {
                 RutaRestringida(

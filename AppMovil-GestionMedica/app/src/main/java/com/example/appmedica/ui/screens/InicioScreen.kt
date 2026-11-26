@@ -66,6 +66,7 @@ import java.util.Locale
 
 @Composable
 fun InicioScreen(
+    nombre: String = "",
     query: String,
     pacientes: List<Paciente>,
     onQueryChange: (String) -> Unit,
@@ -74,6 +75,7 @@ fun InicioScreen(
     irAgenda: () -> Unit = {},
     irCatalogo: () -> Unit = {},
     irDetalleCita: (String) -> Unit = {},
+    irPerfil: () -> Unit = {},
     resumenCita: ResumenProxima = ResumenProxima(mensaje = "No hay próximas citas.")
 ) {
     LazyColumn(
@@ -88,9 +90,11 @@ fun InicioScreen(
         // Encabezado oscuro con saludo y accesos rápidos
         item {
             EncabezadoInicio(
+                nombre = nombre,
                 irAgenda = irAgenda,
                 irRecetar = irCatalogo,
-                irAgregarPaciente = irAgregarPaciente
+                irAgregarPaciente = irAgregarPaciente,
+                irPerfil = irPerfil
             )
         }
         
@@ -199,9 +203,11 @@ fun InicioScreen(
 
 @Composable
 private fun EncabezadoInicio(
+    nombre: String,
     irAgenda: () -> Unit,
     irRecetar: () -> Unit,
     irAgregarPaciente: () -> Unit,
+    irPerfil: () -> Unit
     ) {
     Column(
         modifier = Modifier
@@ -219,7 +225,7 @@ private fun EncabezadoInicio(
                 Text(text = fechaDeHoy(), color = FondoBlanco, style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = "${saludoSegunHora()}, Dr. Jaldin",
+                    text = "${saludoSegunHora()}, Dr. ${nombre.trim().substringAfterLast(" ")}",
                     color = FondoBlanco,
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -232,7 +238,8 @@ private fun EncabezadoInicio(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(AvatarInicio),
+                    .background(AvatarInicio)
+                    .clickable { irPerfil() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

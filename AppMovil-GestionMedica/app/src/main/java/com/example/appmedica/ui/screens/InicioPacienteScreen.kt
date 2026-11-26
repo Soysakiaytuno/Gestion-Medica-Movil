@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -67,6 +68,7 @@ fun InicioPacienteScreen(
     irMisCitas: () -> Unit,
     irMiHistorial: () -> Unit,
     irDetalleCita: (String) -> Unit,
+    irPerfil: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -81,7 +83,8 @@ fun InicioPacienteScreen(
             EncabezadoInicioPaciente(
                 nombre = nombre,
                 irMisCitas = irMisCitas,
-                irMiHistorial = irMiHistorial
+                irMiHistorial = irMiHistorial,
+                irPerfil = irPerfil
             )
         }
 
@@ -126,7 +129,8 @@ fun InicioPacienteScreen(
 private fun EncabezadoInicioPaciente(
     nombre: String,
     irMisCitas: () -> Unit,
-    irMiHistorial: () -> Unit
+    irMiHistorial: () -> Unit,
+    irPerfil: () -> Unit
 ) {
     val nombreSaludo = nombre.trim().ifEmpty { "Paciente" }
 
@@ -135,6 +139,7 @@ private fun EncabezadoInicioPaciente(
             .fillMaxWidth()
             .clip(RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp))
             .background(AzulPrincipal)
+            .statusBarsPadding()
             .padding(horizontal = 27.dp, vertical = 24.dp)
     ) {
         Row(
@@ -170,7 +175,8 @@ private fun EncabezadoInicioPaciente(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
-                    .background(AvatarInicio),
+                    .background(AvatarInicio)
+                    .clickable { irPerfil() },
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
